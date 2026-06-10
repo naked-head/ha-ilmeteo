@@ -1,0 +1,29 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Configura iLMeteo.it",
+        "description": "Inserisci il token API e cerca la località.",
+        "data": {
+          "api_key": "Token API",
+          "search_query": "Cerca città (es. Milano)"
+        }
+      },
+      "pick_place": {
+        "title": "Seleziona la località",
+        "description": "Trovate {count} corrispondenze. Seleziona quella corretta.",
+        "data": {
+          "place_id": "Località"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Token API non valido o scaduto.",
+      "cannot_connect": "Impossibile connettersi all'API iLMeteo.",
+      "no_results": "Nessuna località trovata per la ricerca effettuata."
+    },
+    "abort": {
+      "already_configured": "Questa località è già configurata."
+    }
+  }
+}

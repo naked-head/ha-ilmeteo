@@ -2,10 +2,11 @@
   "domain": "ilmeteo",
   "name": "iLMeteo.it",
   "version": "1.0.0",
-  "documentation": "https://apigateway.ilmeteo.it",
+  "documentation": "https://github.com/naked-head/ha-ilmeteo",
+  "issue_tracker": "https://github.com/naked-head/ha-ilmeteo/issues",
   "requirements": [],
   "dependencies": [],
-  "codeowners": [],
+  "codeowners": ["@naked-head"],
   "iot_class": "cloud_polling",
   "config_flow": true
 }

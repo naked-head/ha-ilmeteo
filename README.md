@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="images/logo.png" alt="iLMeteo.it" width="120">
+</p>
+
 # iLMeteo.it — Home Assistant Custom Integration
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/integration)
@@ -16,6 +20,7 @@ Integrazione per [Home Assistant](https://www.home-assistant.io/) che espone i d
 - Questa integrazione fa **scraping** di una pagina pubblica. Non esiste alcuna garanzia contrattuale di stabilità: se iLMeteo cambia il markup del box, il parser potrebbe richiedere un aggiornamento.
 - Per rispetto dei [termini d'uso](https://www.ilmeteo.it/portale/termini_e_condizioni) di iLMeteo, l'integrazione espone l'attribuzione "Dati meteo forniti da iLMeteo.it" sull'entità ed effettua il polling a bassa frequenza (ogni 30 minuti).
 - Progetto non ufficiale, non affiliato a iLMeteo Srl.
+- Il logo e il marchio "iLMeteo" sono di proprietà di iLMeteo Srl e sono usati al solo scopo identificativo del servizio dati.
 
 ---
 

@@ -44,7 +44,7 @@ class IlMeteoWeather(CoordinatorEntity[IlMeteoCoordinator], WeatherEntity):
     _attr_name = None
     _attr_native_temperature_unit = UnitOfTemperature.CELSIUS
     _attr_native_wind_speed_unit = UnitOfSpeed.KILOMETERS_PER_HOUR
-    _attr_attribution = "Dati meteo forniti da iLMeteo.it"
+    _attr_attribution = "Dati meteo forniti da iLMeteo.it (www.ilmeteo.it)"
     _attr_supported_features = (
         WeatherEntityFeature.FORECAST_DAILY | WeatherEntityFeature.FORECAST_HOURLY
     )
@@ -57,7 +57,7 @@ class IlMeteoWeather(CoordinatorEntity[IlMeteoCoordinator], WeatherEntity):
         self._attr_unique_id = f"{DOMAIN}_{entry.data[CONF_CITTA]}"
         self._attr_device_info = {
             "identifiers": {(DOMAIN, str(entry.data[CONF_CITTA]))},
-            "name": f"iLMeteo {self._place_name}",
+            "name": f"iLMeteo.it {self._place_name}",
             "manufacturer": "iLMeteo.it",
             "entry_type": "service",
         }

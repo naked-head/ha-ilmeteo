@@ -11,7 +11,7 @@
 
 A [Home Assistant](https://www.home-assistant.io/) integration that exposes weather data from **[iLMeteo.it](https://www.ilmeteo.it/)** (a popular Italian weather service) as native `weather` entities, with **daily** and **hourly** (3-hourly) forecasts — just like the OpenWeatherMap or Met.no integrations.
 
-> **How it works:** iLMeteo's official REST API is reserved for business customers. Instead, this integration uses the **free public forecast box widget** that iLMeteo provides for embedding on third-party sites (`ilmeteo.it/box/previsioni.php`), parsing it server-side. No token required.
+> **How it works:** iLMeteo's official REST API is reserved for business customers. Instead, this integration uses the **free public forecast box widget** that iLMeteo provides for embedding on third-party sites (see the [business portals page](https://www.ilmeteo.it/business/portali)). The widget endpoint (`ilmeteo.it/box/previsioni.php`) is parsed server-side. No token required.
 
 ---
 

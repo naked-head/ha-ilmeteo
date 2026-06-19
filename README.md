@@ -9,85 +9,100 @@
 [![Validate](https://github.com/naked-head/ha-ilmeteo/actions/workflows/validate.yml/badge.svg)](https://github.com/naked-head/ha-ilmeteo/actions/workflows/validate.yml)
 [![License](https://img.shields.io/github/license/naked-head/ha-ilmeteo.svg)](LICENSE)
 
-Integrazione per [Home Assistant](https://www.home-assistant.io/) che espone i dati meteo di **[iLMeteo.it](https://www.ilmeteo.it/)** come entità `weather` native, con previsioni **giornaliere** e **orarie** (triorarie) — come le integrazioni OpenWeatherMap o Met.no.
+A [Home Assistant](https://www.home-assistant.io/) integration that exposes weather data from **[iLMeteo.it](https://www.ilmeteo.it/)** (a popular Italian weather service) as native `weather` entities, with **daily** and **hourly** (3-hourly) forecasts — just like the OpenWeatherMap or Met.no integrations.
 
-> **Come funziona:** l'API REST ufficiale di iLMeteo è riservata a clienti business. Questa integrazione usa invece il **box previsioni pubblico e gratuito** che iLMeteo mette a disposizione per l'embedding su siti terzi (`ilmeteo.it/box/previsioni.php`), facendone il parsing lato server. Nessun token richiesto.
-
----
-
-## ⚠️ Note importanti
-
-- Questa integrazione fa **scraping** di una pagina pubblica. Non esiste alcuna garanzia contrattuale di stabilità: se iLMeteo cambia il markup del box, il parser potrebbe richiedere un aggiornamento.
-- Per rispetto dei [termini d'uso](https://www.ilmeteo.it/portale/termini_e_condizioni) di iLMeteo, l'integrazione espone l'attribuzione "Dati meteo forniti da iLMeteo.it" sull'entità ed effettua il polling a bassa frequenza (ogni 30 minuti).
-- Progetto non ufficiale, non affiliato a iLMeteo Srl.
-- Il logo e il marchio "iLMeteo" sono di proprietà di iLMeteo Srl e sono usati al solo scopo identificativo del servizio dati.
+> **How it works:** iLMeteo's official REST API is reserved for business customers. Instead, this integration uses the **free public forecast box widget** that iLMeteo provides for embedding on third-party sites (`ilmeteo.it/box/previsioni.php`), parsing it server-side. No token required.
 
 ---
 
-## Funzionalità
+## ⚠️ Important notes
 
-- Entità `weather` nativa con condizioni attuali (slot triorario più vicino all'ora corrente)
-- **Forecast giornaliero** fino a 6 giorni (temp. min/max, precipitazioni cumulate, vento)
-- **Forecast orario** (triorario): 5 fasce al giorno con temperatura, temperatura percepita, umidità, vento, precipitazioni
-- Distinzione automatica giorno/notte per le condizioni (es. `sunny` → `clear-night`)
-- Supporto **multi-località**: ogni codice città è un'istanza separata
-- Configurazione tramite UI, nessun YAML, nessun token
+- This integration **scrapes** a public web page. There is no contractual stability guarantee: if iLMeteo changes the box markup, the parser may need an update.
+- Out of respect for iLMeteo's [terms of use](https://www.ilmeteo.it/portale/termini_e_condizioni), the integration shows the attribution "Dati meteo forniti da iLMeteo.it (www.ilmeteo.it)" on the entity and polls at a low frequency (every 30 minutes).
+- Unofficial project, not affiliated with iLMeteo Srl.
+- The "iLMeteo" logo and trademark are property of iLMeteo Srl and are used solely to identify the data source.
 
 ---
 
-## Installazione
+## Features
 
-### Tramite HACS (consigliato)
-
-1. HACS → Integrazioni → menu ⋮ → **Repository personalizzati**
-2. Aggiungi `https://github.com/naked-head/ha-ilmeteo`, categoria **Integration**
-3. Cerca "iLMeteo" e installa
-4. Riavvia Home Assistant
-
-### Manuale
-
-1. Scarica l'ultima [release](https://github.com/naked-head/ha-ilmeteo/releases/latest)
-2. Copia `custom_components/ilmeteo` in `/config/custom_components/`
-3. Riavvia Home Assistant
+- Native `weather` entity with current conditions (the 3-hour slot closest to the current time)
+- **Daily forecast** up to 6 days (min/max temperature, cumulative precipitation, wind)
+- **Hourly forecast** (3-hourly): 5 slots per day with temperature, apparent temperature, humidity, wind, precipitation
+- Automatic day/night condition handling (e.g. `sunny` → `clear-night`)
+- **Multi-location** support: each city is a separate instance
+- UI configuration — no YAML, no token
 
 ---
 
-## Configurazione
+## Installation
 
-1. **Impostazioni → Integrazioni → Aggiungi integrazione → iLMeteo.it**
-2. Seleziona **regione**, poi **provincia**, poi **comune** dai menu a tendina
-3. Fatto: l'entità viene creata e validata automaticamente
+### Via HACS (recommended)
 
-L'elenco dei comuni italiani (8.218 comuni, 110 province, 20 regioni) è incluso
-nell'integrazione, quindi non serve cercare codici manualmente. Per aggiungere
-più località, ripeti la procedura.
+1. HACS → Integrations → ⋮ menu → **Custom repositories**
+2. Add `https://github.com/naked-head/ha-ilmeteo`, category **Integration**
+3. Search for "iLMeteo" and install
+4. Restart Home Assistant
 
-> Il dataset è generato dai codici ufficiali iLMeteo tramite
-> `scripts/build_locations.py` e salvato compresso (~67 KB) in
+### Manual
+
+1. Download the latest [release](https://github.com/naked-head/ha-ilmeteo/releases/latest)
+2. Copy `custom_components/ilmeteo` into `/config/custom_components/`
+3. Restart Home Assistant
+
+---
+
+## Configuration
+
+1. **Settings → Devices & Services → Add Integration → iLMeteo.it**
+2. Select **region**, then **province**, then **municipality** from the dropdowns
+3. Done: the entity is created and validated automatically
+
+The full list of Italian municipalities (8,218 municipalities, 110 provinces, 20 regions) is bundled with the integration, so there is no need to look up codes manually. To add more locations, repeat the procedure.
+
+> The dataset is generated from iLMeteo's official location codes via
+> `scripts/build_locations.py` and stored compressed (~67 KB) in
 > `custom_components/ilmeteo/data/locations.json.gz`.
 
-## Dati esposti
+## Exposed data
 
-**Condizioni attuali:** `temperature`, `apparent_temperature`, `humidity`, `wind_speed`, `wind_bearing`, `condition`
+**Current conditions:** `temperature`, `apparent_temperature`, `humidity`, `wind_speed`, `wind_bearing`, `condition`
 
-**Forecast giornaliero:** per ogni giorno → temperatura max/min, precipitazioni totali, vento massimo, condizione rappresentativa (fascia delle 14:00)
+**Daily forecast:** for each day → max/min temperature, total precipitation, peak wind, representative condition (the 2:00 PM slot)
 
-**Forecast orario:** per ogni fascia trioraria → temperatura, percepita, umidità, vento, precipitazioni, condizione
+**Hourly forecast:** for each 3-hour slot → temperature, apparent temperature, humidity, wind, precipitation, condition
 
 ---
 
-## Sviluppo e test
+## Development & testing
 
-Il parser HTML è isolato in `api.py` (`parse_box`) senza dipendenze da Home Assistant, quindi è testabile direttamente:
+The HTML parser is isolated in `api.py` (`parse_box`) with no Home Assistant dependency, so it can be tested directly:
 
 ```bash
 python tests/test_parser.py
 ```
 
-I test usano un fixture HTML reale in `tests/fixtures/`.
+The tests use a real HTML fixture in `tests/fixtures/`.
+
+To regenerate the bundled location dataset from the official iLMeteo CSV files:
+
+```bash
+python scripts/build_locations.py codici_comuni.csv codici_province.csv \
+  custom_components/ilmeteo/data/locations.json.gz
+```
 
 ---
 
-## Licenza
+## Changelog
 
-MIT — vedi [LICENSE](LICENSE)
+See [CHANGELOG.md](CHANGELOG.md) for the full version history.
+
+---
+
+## License
+
+MIT — see [LICENSE](LICENSE)
+
+## Disclaimer
+
+This is an unofficial integration and is not affiliated with, endorsed by, or supported by iLMeteo Srl. Weather data is retrieved from the publicly available iLMeteo.it forecast box. Use at your own risk and in accordance with iLMeteo's terms of use.

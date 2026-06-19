@@ -1,42 +1,42 @@
 # Changelog
 
-Tutte le modifiche rilevanti a questo progetto sono documentate in questo file.
+All notable changes to this project are documented in this file.
 
-Il formato è basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/)
-e il progetto aderisce al [Versionamento Semantico](https://semver.org/lang/it/).
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
 ## [0.3.2] - 2026-06-19
 ### Changed
-- Attribution dell'entità estesa a "Dati meteo forniti da iLMeteo.it (www.ilmeteo.it)".
+- Extended the entity attribution to "Dati meteo forniti da iLMeteo.it (www.ilmeteo.it)".
 
 ## [0.3.1] - 2026-06-19
 ### Changed
-- Nome del device esteso a `iLMeteo.it <località>` (comprensivo del dominio).
+- Device name extended to `iLMeteo.it <location>` (including the domain).
 ### Added
-- Logo ufficiale iLMeteo.it come icona dell'integrazione (`brand/`) e nel README.
+- Official iLMeteo.it logo as the integration icon (`brand/`) and in the README.
 
 ## [0.3.0] - 2026-06-19
 ### Added
-- Selezione località a cascata: regione → provincia → comune (nessun codice manuale).
-- Dataset di 8.218 comuni italiani incluso, in JSON compresso (~67 KB).
-- Script di rigenerazione del dataset in `scripts/build_locations.py`.
-- Test unitari del dataset località.
+- Cascading location selection: region → province → municipality (no manual codes).
+- Bundled dataset of 8,218 Italian municipalities as compressed JSON (~67 KB).
+- Dataset regeneration script at `scripts/build_locations.py`.
+- Unit tests for the location dataset.
 
 ## [0.2.0] - 2026-06-19
 ### Changed
-- Riscrittura completa del backend: dal client REST (API enterprise-only) allo
-  scraping del box previsioni pubblico e gratuito di iLMeteo.it.
+- Complete backend rewrite: from the REST client (enterprise-only API) to
+  scraping iLMeteo.it's free public forecast box widget.
 ### Added
-- Forecast giornaliero e orario (triorario).
-- Distinzione automatica giorno/notte per le condizioni meteo.
-- Parser HTML basato su regex (zero dipendenze aggiuntive) con test unitari.
+- Daily and hourly (3-hourly) forecasts.
+- Automatic day/night handling for weather conditions.
+- Regex-based HTML parser (no extra dependencies) with unit tests.
 
 ## [0.1.0] - 2026-06-19
 ### Added
-- Prima bozza dell'integrazione basata sull'API REST ufficiale iLMeteo
-  (successivamente abbandonata perché riservata a clienti business).
+- Initial draft of the integration based on the official iLMeteo REST API
+  (later abandoned because it is reserved for business customers).
 
 [Unreleased]: https://github.com/naked-head/ha-ilmeteo/compare/v0.3.2...HEAD
 [0.3.2]: https://github.com/naked-head/ha-ilmeteo/compare/v0.3.1...v0.3.2

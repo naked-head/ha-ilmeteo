@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="images/logo.png" alt="iLMeteo.it" width="120">
+  <img src="https://raw.githubusercontent.com/naked-head/ha-ilmeteo/main/images/logo.png" alt="iLMeteo.it" width="120">
 </p>
 
 # iLMeteo.it — Home Assistant Custom Integration
@@ -24,6 +24,9 @@ A [Home Assistant](https://www.home-assistant.io/) integration that exposes weat
 
 ---
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/naked-head/ha-ilmeteo/main/images/card-demo.png" alt="iLMeteo.it weather card" width="500">
+</p>
 ## Features
 
 - Native `weather` entity with current conditions (the 3-hour slot closest to the current time)

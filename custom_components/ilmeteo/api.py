@@ -94,8 +94,8 @@ def parse_box(html_text: str) -> dict[str, Any]:
     """Parse a single box-widget HTML page into a structured dict.
 
     Uses regex rather than BeautifulSoup to avoid adding a dependency to the
-    integration (HA discourages heavy requirements). The markup is stable and
-    line-oriented, so regex is adequate and fast.
+    integration. The markup is stable and line-oriented, so regex is adequate
+    and fast.
     """
     result: dict[str, Any] = {"city": None, "date": None, "hours": []}
 

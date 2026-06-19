@@ -88,24 +88,6 @@ I test usano un fixture HTML reale in `tests/fixtures/`.
 
 ---
 
-## Changelog
-
-### v0.3.0
-- Selezione località a cascata: regione → provincia → comune (no codici manuali)
-- Dataset di 8.218 comuni italiani incluso (JSON compresso, ~67 KB)
-- Script di rigenerazione dataset in `scripts/build_locations.py`
-
-### v0.2.0
-- Riscrittura completa: backend basato sul box widget pubblico (no API token)
-- Forecast giornaliero + orario
-- Distinzione giorno/notte
-- Test unitari del parser
-
-### v0.1.0
-- Prima bozza basata sull'API REST (poi resa enterprise-only)
-
----
-
 ## Licenza
 
 MIT — vedi [LICENSE](LICENSE)

@@ -25,7 +25,7 @@ A [Home Assistant](https://www.home-assistant.io/) integration that exposes weat
 ---
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/naked-head/ha-ilmeteo/main/images/card-demo.png" alt="iLMeteo.it weather card" width="500">
+  <img src="https://raw.githubusercontent.com/naked-head/ha-ilmeteo/main/images/ilmeteo_card_demo.png" alt="iLMeteo.it weather card" width="500">
 </p>
 ## Features
 

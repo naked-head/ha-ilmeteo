@@ -2,28 +2,34 @@
   "config": {
     "step": {
       "user": {
-        "title": "Configura iLMeteo.it",
-        "description": "Inserisci il token API e cerca la località.",
+        "title": "iLMeteo.it — Region",
+        "description": "Select the region.",
         "data": {
-          "api_key": "Token API",
-          "search_query": "Cerca città (es. Milano)"
+          "region": "Region"
         }
       },
-      "pick_place": {
-        "title": "Seleziona la località",
-        "description": "Trovate {count} corrispondenze. Seleziona quella corretta.",
+      "province": {
+        "title": "iLMeteo.it — Province",
+        "description": "Region: {region}. Select the province.",
         "data": {
-          "place_id": "Località"
+          "province": "Province"
+        }
+      },
+      "city": {
+        "title": "iLMeteo.it — Municipality",
+        "description": "{province} ({region}). Select the municipality.",
+        "data": {
+          "city": "Municipality"
         }
       }
     },
     "error": {
-      "invalid_auth": "Token API non valido o scaduto.",
-      "cannot_connect": "Impossibile connettersi all'API iLMeteo.",
-      "no_results": "Nessuna località trovata per la ricerca effettuata."
+      "cannot_connect": "Could not connect to iLMeteo.it. Please try again later.",
+      "no_data": "No weather data available for this municipality.",
+      "invalid_city": "Invalid municipality."
     },
     "abort": {
-      "already_configured": "Questa località è già configurata."
+      "already_configured": "This municipality is already configured."
     }
   }
 }

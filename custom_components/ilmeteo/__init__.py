@@ -1,15 +1,15 @@
-"""The iLMeteo.it integration."""
+"""The iLMeteo.it integration (box-widget scraper backend)."""
 from __future__ import annotations
 
 import logging
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_API_KEY, Platform
+from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from .api import IlMeteoClient
-from .const import CONF_MODEL, CONF_PLACE_ID, CONF_PLACE_NAME, DOMAIN
+from .api import IlMeteoScraper
+from .const import CONF_CITTA, CONF_PLACE_NAME, DOMAIN
 from .coordinator import IlMeteoCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -20,20 +20,18 @@ PLATFORMS: list[Platform] = [Platform.WEATHER]
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up iLMeteo.it from a config entry."""
     session = async_get_clientsession(hass)
-    client = IlMeteoClient(entry.data[CONF_API_KEY], session)
+    scraper = IlMeteoScraper(entry.data[CONF_CITTA], session)
 
     coordinator = IlMeteoCoordinator(
         hass=hass,
-        client=client,
-        place_id=entry.data[CONF_PLACE_ID],
+        scraper=scraper,
+        citta=str(entry.data[CONF_CITTA]),
         place_name=entry.data[CONF_PLACE_NAME],
-        model=entry.data.get(CONF_MODEL, "ilmeteo"),
     )
 
     await coordinator.async_config_entry_first_refresh()
 
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator
-
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     return True
 

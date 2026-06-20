@@ -9,39 +9,39 @@
 [![Validate](https://github.com/naked-head/ha-ilmeteo/actions/workflows/validate.yml/badge.svg)](https://github.com/naked-head/ha-ilmeteo/actions/workflows/validate.yml)
 [![License](https://img.shields.io/github/license/naked-head/ha-ilmeteo.svg)](https://github.com/naked-head/ha-ilmeteo/blob/main/LICENSE)
 
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=naked-head&repository=ha-ilmeteo&category=integration)
+
 A [Home Assistant](https://www.home-assistant.io/) integration that exposes weather data from **[iLMeteo.it](https://www.ilmeteo.it/)** (a popular Italian weather service) as native `weather` entities, with **daily** and **hourly** (3-hourly) forecasts — just like the OpenWeatherMap or Met.no integrations.
 
-> **How it works:** iLMeteo's official REST API is reserved for business customers. Instead, this integration uses the **free public forecast box widget** that iLMeteo provides for embedding on third-party sites (see the [business portals page](https://www.ilmeteo.it/business/portali)). The widget endpoint (`ilmeteo.it/box/previsioni.php`) is parsed server-side. No token required.
+> **How it works:** iLMeteo's official REST API is reserved for business customers. Instead, this integration uses three of the **free public forecast box widgets** that iLMeteo provides for embedding on third-party sites (see the [business portals page](https://www.ilmeteo.it/business/portali)): a real-time conditions box for current weather, an official daily-summary box for accurate min/max and rain probability, and a 3-hourly box for detailed hourly forecasts. All are parsed server-side. No token required.
 
 ---
 
 ## ⚠️ Important notes
 
-- This integration **scrapes** a public web page. There is no contractual stability guarantee: if iLMeteo changes the box markup, the parser may need an update.
+- This integration **scrapes** public web pages. There is no contractual stability guarantee: if iLMeteo changes a box's markup, the parser may need an update.
 - Out of respect for iLMeteo's [terms of use](https://www.ilmeteo.it/portale/termini_e_condizioni), the integration shows the attribution "Dati meteo forniti da iLMeteo.it (www.ilmeteo.it)" on the entity and polls at a low frequency (every 30 minutes).
 - Unofficial project, not affiliated with iLMeteo Srl.
 - The "iLMeteo" logo and trademark are property of iLMeteo Srl and are used solely to identify the data source.
 
 ---
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/naked-head/ha-ilmeteo/main/images/ilmeteo_card_demo.png" alt="iLMeteo.it weather card" width="500">
-</p>
-
 ## Features
 
-- Native `weather` entity with current conditions (the 3-hour slot closest to the current time)
-- **Daily forecast** up to 6 days (min/max temperature, cumulative precipitation, wind)
+- Native `weather` entity with **genuine real-time current conditions** (not an approximated forecast slot)
+- **Daily forecast** up to 6 days using iLMeteo's own official daily min/max and **precipitation probability** — not derived from sparse hourly samples
 - **Hourly forecast** (3-hourly): 5 slots per day with temperature, apparent temperature, humidity, wind, precipitation
 - Automatic day/night condition handling (e.g. `sunny` → `clear-night`)
 - **Multi-location** support: each city is a separate instance
 - UI configuration — no YAML, no token
 
+## Screenshots
+
+![iLMeteo.it weather card](https://raw.githubusercontent.com/naked-head/ha-ilmeteo/main/images/card-demo.png)
+
 ---
 
 ## Installation
-
-[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=naked-head&repository=ha-ilmeteo&category=integration)
 
 ### Via HACS (recommended)
 
@@ -72,11 +72,11 @@ The full list of Italian municipalities (8,218 municipalities, 110 provinces, 20
 
 ## Exposed data
 
-**Current conditions:** `temperature`, `apparent_temperature`, `humidity`, `wind_speed`, `wind_bearing`, `condition`
+**Current conditions** *(real-time box)*: `temperature`, `humidity`, `wind_speed`, `wind_bearing`, `condition`
 
-**Daily forecast:** for each day → max/min temperature, total precipitation, peak wind, representative condition (the 2:00 PM slot)
+**Daily forecast** *(official daily-summary box)*: max/min temperature, **precipitation probability**, wind, condition, plus total precipitation amount (from the hourly box)
 
-**Hourly forecast:** for each 3-hour slot → temperature, apparent temperature, humidity, wind, precipitation, condition
+**Hourly forecast** *(3-hourly box)*: for each 3-hour slot → temperature, apparent temperature, humidity, wind, precipitation, condition
 
 ---
 
@@ -101,7 +101,7 @@ python scripts/build_locations.py codici_comuni.csv codici_province.csv \
 
 ## Changelog
 
-See [CHANGELOG.md](https://github.com/naked-head/ha-ilmeteo/blob/main/CHANGELOG.md)
+See [CHANGELOG.md](CHANGELOG.md) for the full version history.
 
 ---
 

@@ -10,6 +10,20 @@ DEFAULT_NUM_DAYS = 6
 CONF_CITTA = "citta"
 CONF_PLACE_NAME = "place_name"
 
+# ---------------------------------------------------------------------------
+# Condition mapping
+#
+# The box widget exposes a numeric sprite code (ss-smallN) plus an Italian
+# text label. Day codes are 1..24; night variants are the same icon + 100
+# (e.g. 3 = "Poco nuvoloso" day, 103 = night). We map the Italian text to HA
+# conditions (robust to icon renumbering) and use the >100 offset only to
+# switch a clear sky between 'sunny' and 'clear-night'.
+#
+# HA valid conditions: clear-night, cloudy, fog, hail, lightning,
+# lightning-rainy, partlycloudy, pouring, rainy, snowy, snowy-rainy, sunny,
+# windy, windy-variant, exceptional.
+# ---------------------------------------------------------------------------
+
 # Italian label (lowercased) -> HA condition
 CONDITION_TEXT_MAP = {
     "sereno": "sunny",
@@ -43,7 +57,7 @@ CONDITION_TEXT_MAP = {
 }
 
 # Fallback by numeric code (day base codes). Only used if the text label is
-# unknown.
+# unknown. Refine as more codes are observed in the wild.
 CONDITION_CODE_MAP = {
     1: "sunny",
     2: "partlycloudy",

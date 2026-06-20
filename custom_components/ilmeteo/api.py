@@ -85,6 +85,44 @@ class IlMeteoScraper:
             raise IlMeteoError("No forecast days could be retrieved")
         return days
 
+    async def fetch_current(self) -> dict[str, Any]:
+        """Fetch the real-time conditions box (type=real1).
+
+        Unlike the 3-hourly box, this reflects the actual current hour, not
+        a fixed forecast slot, so it never goes stale or "jumps forward"
+        once a slot elapses.
+        """
+        text = await self._get_box(type_="real1")
+        return parse_real1(text)
+
+    async def fetch_daily_summary(self, num_days: int = 6) -> list[dict[str, Any]]:
+        """Fetch the official daily min/max box (type=day1) for all days at once.
+
+        This reflects iLMeteo's own daily aggregate (computed from their full
+        model run, not just the 5 samples in the 3-hourly box), so the daily
+        low in particular is materially more accurate than what can be
+        derived from the tri1 box alone.
+        """
+        text = await self._get_box(type_="day1", days=num_days)
+        return parse_day1(text)
+
+    async def _get_box(self, type_: str, **extra: Any) -> str:
+        """Fetch a box widget page of the given type and return raw HTML."""
+        params = dict(_DEFAULT_PARAMS)
+        params["citta"] = self._citta
+        params["type"] = type_
+        params.update({k: str(v) for k, v in extra.items()})
+
+        try:
+            async with self._session.get(
+                BOX_BASE_URL, params=params, timeout=aiohttp.ClientTimeout(total=30)
+            ) as resp:
+                if resp.status != 200:
+                    raise IlMeteoError(f"HTTP {resp.status} from box endpoint")
+                return await resp.text()
+        except aiohttp.ClientError as err:
+            raise IlMeteoError(f"Connection error: {err}") from err
+
 
 # ---------------------------------------------------------------------------
 # Pure HTML parsing (no HA / aiohttp dependency, easy to unit-test)
@@ -94,8 +132,8 @@ def parse_box(html_text: str) -> dict[str, Any]:
     """Parse a single box-widget HTML page into a structured dict.
 
     Uses regex rather than BeautifulSoup to avoid adding a dependency to the
-    integration. The markup is stable and line-oriented, so regex is adequate
-    and fast.
+    integration (HA discourages heavy requirements). The markup is stable and
+    line-oriented, so regex is adequate and fast.
     """
     result: dict[str, Any] = {"city": None, "date": None, "hours": []}
 
@@ -216,3 +254,119 @@ def wind_bearing(direction: str | None) -> float | None:
     if not direction:
         return None
     return WIND_DIR_DEGREES.get(direction.upper())
+
+
+def parse_real1(html_text: str) -> dict[str, Any]:
+    """Parse the real-time conditions box (type=real1).
+
+    Markup is a single bullet line, e.g.:
+        <a ...>Sole e caldo</a> ore 12:00* Temperatura: <b>34°C</b>
+        Umidità: 24%
+        Vento: debole - WNW 6 km/h
+
+    Returns a dict with condition_text, hour ("HH:MM"), temperature,
+    humidity, wind_dir, wind_speed, wind_desc.
+    """
+    result: dict[str, Any] = {
+        "condition_text": None,
+        "hour": None,
+        "temperature": None,
+        "humidity": None,
+        "wind_dir": None,
+        "wind_speed": None,
+        "wind_desc": None,
+    }
+
+    # Condition text: first <a ...>TEXT</a> inside the list item
+    cond_m = re.search(r"<a[^>]*>([^<]+)</a>", html_text)
+    if cond_m:
+        result["condition_text"] = _clean(cond_m.group(1))
+
+    hour_m = re.search(r"ore\s+(\d{1,2}:\d{2})", html_text)
+    if hour_m:
+        result["hour"] = hour_m.group(1)
+
+    temp_m = re.search(r"Temperatura:\s*<b>\s*(-?\d+[.,]?\d*)", html_text)
+    if temp_m:
+        result["temperature"] = float(temp_m.group(1).replace(",", "."))
+
+    hum_m = re.search(r"Umidit[àa]:\s*(\d+[.,]?\d*)", html_text)
+    if hum_m:
+        result["humidity"] = float(hum_m.group(1).replace(",", "."))
+
+    # "Vento: debole - WNW 6 km/h"
+    wind_m = re.search(
+        r"Vento:\s*([a-zàèìòù]+)\s*-\s*([A-Z]+)\s+(\d+[.,]?\d*)\s*km/h",
+        html_text,
+        re.I,
+    )
+    if wind_m:
+        result["wind_desc"] = wind_m.group(1).lower()
+        result["wind_dir"] = wind_m.group(2).upper()
+        result["wind_speed"] = float(wind_m.group(3).replace(",", "."))
+
+    if result["temperature"] is None:
+        raise IlMeteoParseError("Could not parse real1 box (layout changed?)")
+
+    return result
+
+
+def parse_day1(html_text: str) -> list[dict[str, Any]]:
+    """Parse the official daily min/max box (type=day1).
+
+    Each day is a <!-- day:begin --> ... <!-- day:end --> block containing a
+    day-name link, a condition sprite, T min/max cells, wind direction +
+    speed, and a precipitation-probability mini bar chart with the % as
+    text (e.g. '&nbsp;5%' or '25%&nbsp;').
+
+    Returns a list of dicts (ordered today -> future), one per day, with:
+    day_label, condition_code, temp_min, temp_max, wind_dir, wind_speed,
+    precipitation_probability.
+    """
+    days: list[dict[str, Any]] = []
+    blocks = re.findall(r"<!-- day:begin -->(.*?)<!-- day:end -->", html_text, re.S)
+
+    for block in blocks:
+        cells = re.findall(r"<td[^>]*>(.*?)</td>", block, re.S)
+        if len(cells) < 6:
+            continue
+
+        day_label = _clean(cells[0])
+
+        code = None
+        code_m = re.search(r"ss-small(\d+\w*)", cells[1])
+        if code_m:
+            code = code_m.group(1)
+
+        tmin = _num(cells[2])
+        tmax = _num(cells[3])
+
+        wind_dir = _clean(cells[4]) or None
+        wind_speed = _num(cells[5])
+
+        # The precipitation-probability cell contains a nested mini-table
+        # (a colored bar + a text cell) whose own <td> tags throw off simple
+        # cell-index counting, AND whose inline style can contain its own
+        # misleading '%' (e.g. width='100%'). Strip all tags first so only
+        # visible text remains, then search that for the real figure.
+        precip_prob = None
+        prob_m = re.search(r"(\d+)\s*%", _clean(block))
+        if prob_m:
+            precip_prob = float(prob_m.group(1))
+
+        days.append(
+            {
+                "day_label": day_label,
+                "condition_code": code,
+                "temp_min": tmin,
+                "temp_max": tmax,
+                "wind_dir": wind_dir,
+                "wind_speed": wind_speed,
+                "precipitation_probability": precip_prob,
+            }
+        )
+
+    if not days:
+        raise IlMeteoParseError("Could not parse day1 box (layout changed?)")
+
+    return days

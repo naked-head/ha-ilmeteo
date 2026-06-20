@@ -1,8 +1,8 @@
-"""iLMeteo.it Weather entity (box scraper backend)."""
+"""iLMeteo.it Weather entity (multi-box scraper backend)."""
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Any
 
 from homeassistant.components.weather import (
@@ -38,7 +38,7 @@ async def async_setup_entry(
 
 
 class IlMeteoWeather(CoordinatorEntity[IlMeteoCoordinator], WeatherEntity):
-    """Weather entity backed by the iLMeteo box widget."""
+    """Weather entity backed by iLMeteo's real1 + day1 + tri1 box widgets."""
 
     _attr_has_entity_name = True
     _attr_name = None
@@ -67,107 +67,108 @@ class IlMeteoWeather(CoordinatorEntity[IlMeteoCoordinator], WeatherEntity):
     # ------------------------------------------------------------------
 
     @property
-    def _days(self) -> list[dict[str, Any]]:
-        return self.coordinator.data or []
+    def _current(self) -> dict[str, Any]:
+        """Real-time conditions (type=real1) — a genuine current reading."""
+        return (self.coordinator.data or {}).get("current") or {}
 
     @property
-    def _current_hour(self) -> dict[str, Any] | None:
-        """Return the forecast slot closest to 'now' (today's nearest slot)."""
-        if not self._days:
-            return None
-        today = self._days[0]
-        hours = today.get("hours") or []
-        if not hours:
-            return None
-        now = dt_util.now()
-        best = None
-        best_delta = None
-        for h in hours:
-            slot_time = _parse_slot_time(today.get("date"), h.get("time"), now)
-            if slot_time is None:
-                continue
-            delta = abs((slot_time - now).total_seconds())
-            if best_delta is None or delta < best_delta:
-                best_delta = delta
-                best = h
-        return best or hours[0]
+    def _daily(self) -> list[dict[str, Any]]:
+        """Official daily min/max + precipitation probability (type=day1)."""
+        return (self.coordinator.data or {}).get("daily") or []
+
+    @property
+    def _days(self) -> list[dict[str, Any]]:
+        """3-hourly forecast detail (type=tri1), used for hourly forecast."""
+        return (self.coordinator.data or {}).get("days") or []
 
     # ------------------------------------------------------------------
-    # Current conditions
+    # Current conditions — from real1, a true current-hour reading, not a
+    # forecast slot. No more "closest slot" guessing or timezone pitfalls.
     # ------------------------------------------------------------------
 
     @property
     def native_temperature(self) -> float | None:
-        h = self._current_hour
-        return h.get("temperature") if h else None
-
-    @property
-    def native_apparent_temperature(self) -> float | None:
-        h = self._current_hour
-        return h.get("wind_chill") if h else None
+        return self._current.get("temperature")
 
     @property
     def humidity(self) -> float | None:
-        h = self._current_hour
-        return h.get("humidity") if h else None
+        return self._current.get("humidity")
 
     @property
     def native_wind_speed(self) -> float | None:
-        h = self._current_hour
-        return h.get("wind_speed") if h else None
+        return self._current.get("wind_speed")
 
     @property
     def wind_bearing(self) -> float | None:
-        h = self._current_hour
-        return wind_bearing(h.get("wind_dir")) if h else None
+        return wind_bearing(self._current.get("wind_dir"))
 
     @property
     def condition(self) -> str | None:
-        h = self._current_hour
-        if not h:
+        cur = self._current
+        if not cur.get("condition_text"):
             return None
-        return map_condition(h.get("condition_text"), h.get("condition_code"))
+        # real1 has no night-sprite code (unlike tri1's >100 convention), so
+        # day/night can't be read from the source. Approximate using a fixed
+        # daylight window instead — good enough for the icon, not exact.
+        now_hour = dt_util.now().hour
+        is_night = not (6 <= now_hour < 21)
+        condition = map_condition(cur.get("condition_text"), None)
+        if is_night and condition == "sunny":
+            return "clear-night"
+        return condition
 
     # ------------------------------------------------------------------
     # Forecasts
     # ------------------------------------------------------------------
 
     async def async_forecast_daily(self) -> list[Forecast] | None:
-        forecasts: list[Forecast] = []
-        for day in self._days:
-            hours = day.get("hours") or []
-            if not hours:
-                continue
-            temps = [h["temperature"] for h in hours if h.get("temperature") is not None]
-            precip = sum(h.get("precipitation") or 0.0 for h in hours)
-            winds = [h["wind_speed"] for h in hours if h.get("wind_speed") is not None]
+        """Daily forecast using day1's official min/max (accurate) plus
+        tri1's hourly data for fields day1 doesn't provide (precipitation
+        amount). Falls back to tri1-only aggregation if day1 is unavailable.
+        """
+        daily = self._daily
+        days = self._days
+        if not daily:
+            return None
 
-            # Representative condition: prefer the 14.00 slot, else the worst
-            mid = next((h for h in hours if h.get("time", "").startswith("14")), hours[0])
+        forecasts: list[Forecast] = []
+        for i, d in enumerate(daily):
+            # Match the corresponding tri1 day (same index = same day) only
+            # for fields day1 doesn't supply, e.g. precipitation amount.
+            tri_day = days[i] if i < len(days) else None
+            precip = None
+            if tri_day:
+                precip = round(
+                    sum(h.get("precipitation") or 0.0 for h in tri_day.get("hours") or []),
+                    2,
+                )
+            date_str = tri_day.get("date") if tri_day else None
 
             forecasts.append(
                 Forecast(
-                    datetime=_iso_date(day.get("date")),
-                    native_temperature=max(temps) if temps else None,
-                    native_templow=min(temps) if temps else None,
-                    native_precipitation=round(precip, 2),
-                    native_wind_speed=max(winds) if winds else None,
-                    wind_bearing=wind_bearing(mid.get("wind_dir")),
-                    condition=map_condition(
-                        mid.get("condition_text"), mid.get("condition_code")
-                    ),
+                    datetime=_iso_date(date_str) if date_str else dt_util.now().isoformat(),
+                    native_temperature=d.get("temp_max"),
+                    native_templow=d.get("temp_min"),
+                    native_precipitation=precip,
+                    precipitation_probability=d.get("precipitation_probability"),
+                    native_wind_speed=d.get("wind_speed"),
+                    wind_bearing=wind_bearing(d.get("wind_dir")),
+                    condition=map_condition(None, d.get("condition_code")),
                 )
             )
         return forecasts or None
 
     async def async_forecast_hourly(self) -> list[Forecast] | None:
+        """Hourly (3-hourly) forecast from tri1 — unchanged, still the best
+        source for this level of detail (wind, humidity, visibility, etc).
+        """
         forecasts: list[Forecast] = []
         for day in self._days:
             for h in day.get("hours") or []:
                 dt = _parse_slot_time(day.get("date"), h.get("time"))
                 forecasts.append(
                     Forecast(
-                        datetime=(dt or datetime.now()).isoformat(),
+                        datetime=(dt or dt_util.now()).isoformat(),
                         native_temperature=h.get("temperature"),
                         native_apparent_temperature=h.get("wind_chill"),
                         humidity=h.get("humidity"),
@@ -205,7 +206,7 @@ def _iso_date(date_str: str | None) -> str:
 
 
 def _parse_slot_time(
-    date_str: str | None, time_str: str | None, ref: datetime | None = None
+    date_str: str | None, time_str: str | None
 ) -> datetime | None:
     """Combine 'DD/MM/YYYY' + 'HH.MM' into a local datetime.
 

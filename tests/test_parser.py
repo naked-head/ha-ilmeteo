@@ -10,7 +10,7 @@ sys.path.insert(
     0, os.path.join(os.path.dirname(__file__), "..", "custom_components", "ilmeteo")
 )
 
-from api import parse_box, wind_bearing  # noqa: E402
+from api import parse_box, wind_bearing, parse_real1, parse_day1  # noqa: E402
 from const import map_condition  # noqa: E402
 import location_data as _ld  # noqa: E402
 
@@ -82,6 +82,60 @@ def test_dataset_provinces_sorted():
     provs = _ld.get_provinces("Lombardia")
     assert provs == sorted(provs)
     assert "Milano (MI)" in provs
+
+
+# --- real1 (real-time current conditions) parser tests ---
+
+REAL1_SAMPLE = os.path.join(os.path.dirname(__file__), "fixtures", "real1_rapolano.html")
+
+
+def test_real1_parses_current_conditions():
+    with open(REAL1_SAMPLE, encoding="utf-8") as f:
+        data = parse_real1(f.read())
+    assert data["condition_text"] == "Sole e caldo"
+    assert data["hour"] == "12:00"
+    assert data["temperature"] == 34.0
+    assert data["humidity"] == 24.0
+    assert data["wind_dir"] == "WNW"
+    assert data["wind_speed"] == 6.0
+    assert data["wind_desc"] == "debole"
+
+
+# --- day1 (official daily min/max) parser tests ---
+
+DAY1_SAMPLE = os.path.join(os.path.dirname(__file__), "fixtures", "day1_rapolano.html")
+
+
+def test_day1_parses_six_days():
+    with open(DAY1_SAMPLE, encoding="utf-8") as f:
+        days = parse_day1(f.read())
+    assert len(days) == 6
+
+
+def test_day1_values_match_official_site():
+    # Ground truth cross-checked against ilmeteo.it/meteo/rapolano+terme
+    with open(DAY1_SAMPLE, encoding="utf-8") as f:
+        days = parse_day1(f.read())
+    expected = [
+        (19.0, 36.0, 5.0),
+        (19.0, 36.0, 25.0),
+        (20.0, 34.0, 10.0),
+        (19.0, 34.0, 10.0),
+        (19.0, 35.0, 10.0),
+        (19.0, 35.0, 10.0),
+    ]
+    for day, (tmin, tmax, prob) in zip(days, expected):
+        assert day["temp_min"] == tmin
+        assert day["temp_max"] == tmax
+        assert day["precipitation_probability"] == prob
+
+
+def test_day1_precip_probability_not_confused_by_nested_markup():
+    # Regression test: the precip cell has a nested mini-table whose own
+    # tags/inline-style ('width=100%') previously broke naive parsing.
+    with open(DAY1_SAMPLE, encoding="utf-8") as f:
+        days = parse_day1(f.read())
+    assert days[1]["precipitation_probability"] == 25.0  # not 100.0
 
 
 if __name__ == "__main__":

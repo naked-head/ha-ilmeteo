@@ -19,7 +19,7 @@ A [Home Assistant](https://www.home-assistant.io/) integration that exposes weat
 
 ## ⚠️ Important notes
 
-- This integration **scrapes** public web pages. There is no contractual stability guarantee: if iLMeteo changes a box's markup, the parser may need an update.
+- This integration **scrapes** public web pages. There is no contractual stability guarantee: if iLMeteo changes a box's markup, the parser may need an update. Each of the three boxes is fetched independently, so a layout change on one doesn't take the others down — and a genuine parsing failure raises a visible warning in **Settings → System → Repairs** rather than failing silently.
 - Out of respect for iLMeteo's [terms of use](https://www.ilmeteo.it/portale/termini_e_condizioni), the integration shows the attribution "Dati meteo forniti da iLMeteo.it (www.ilmeteo.it)" on the entity and polls at a low frequency (every 30 minutes).
 - Unofficial project, not affiliated with iLMeteo Srl.
 - The "iLMeteo" logo and trademark are property of iLMeteo Srl and are used solely to identify the data source.

@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-06-20
+### Added
+- CI workflow (`.github/workflows/test.yml`) running the test suite on
+  every push/PR against Python 3.12 and 3.13 — previously the tests
+  existed but nothing ran them automatically.
+- Home Assistant Repair issues: a genuine upstream markup change on one of
+  the three box widgets now raises a persistent, visible warning in
+  Settings → System → Repairs (instead of only a log line), and clears
+  itself automatically once that box parses successfully again.
+### Changed
+- **Resilience**: each of the three box widgets (real1/day1/tri1) is now
+  fetched and parsed independently. A failure on one — network or
+  parsing — no longer fails the whole coordinator update; the entity
+  falls back to the last successfully parsed data for that specific box
+  instead of going entirely unavailable. A Repair issue is raised only
+  for genuine parsing failures (likely a layout change), not for
+  transient network errors, to avoid noisy false alarms.
+- `async_unload_entry` now clears any open Repair issues for the removed
+  location, avoiding orphaned warnings.
+
 ## [0.4.1] - 2026-06-20
 ### Fixed
 - `parse_real1` rewritten against genuine HTML source (the 0.4.0 version
@@ -102,7 +122,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Initial draft of the integration based on the official iLMeteo REST API
   (later abandoned because it is reserved for business customers).
 
-[Unreleased]: https://github.com/naked-head/ha-ilmeteo/compare/v0.4.1...HEAD
+[Unreleased]: https://github.com/naked-head/ha-ilmeteo/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/naked-head/ha-ilmeteo/compare/v0.4.1...v0.5.0
 [0.4.1]: https://github.com/naked-head/ha-ilmeteo/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/naked-head/ha-ilmeteo/compare/v0.3.4...v0.4.0
 [0.3.4]: https://github.com/naked-head/ha-ilmeteo/compare/v0.3.3...v0.3.4

@@ -31,5 +31,11 @@
     "abort": {
       "already_configured": "Questo comune è già configurato."
     }
+  },
+  "issues": {
+    "box_parse_error": {
+      "title": "iLMeteo.it: dati non aggiornabili per {place_name}",
+      "description": "L'integrazione non riesce più a interpretare i dati '{box_type}' di iLMeteo.it per {place_name} — probabilmente iLMeteo ha modificato il formato della pagina. I dati mostrati potrebbero essere obsoleti finché il problema non viene risolto. Controlla se è disponibile un aggiornamento dell'integrazione, oppure segnala il problema."
+    }
   }
 }

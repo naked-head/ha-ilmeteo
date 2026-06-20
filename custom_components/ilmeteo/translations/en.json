@@ -31,5 +31,11 @@
     "abort": {
       "already_configured": "This municipality is already configured."
     }
+  },
+  "issues": {
+    "box_parse_error": {
+      "title": "iLMeteo.it: data could not be refreshed for {place_name}",
+      "description": "The integration can no longer parse the '{box_type}' data from iLMeteo.it for {place_name} — iLMeteo likely changed the page layout. The data shown may be stale until this is resolved. Check whether an integration update is available, or report the issue."
+    }
   }
 }

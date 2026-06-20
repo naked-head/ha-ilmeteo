@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.3.3] - 2026-06-20
+### Fixed
+- README: replaced relative image/link paths with absolute URLs (HACS does not resolve relative paths and strips the `src` attribute — see hacs/integration#4787).
+- README: added HACS direct-install button and demo screenshot.
+
 ## [0.3.2] - 2026-06-19
 ### Changed
 - Extended the entity attribution to "Dati meteo forniti da iLMeteo.it (www.ilmeteo.it)".
@@ -38,7 +43,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Initial draft of the integration based on the official iLMeteo REST API
   (later abandoned because it is reserved for business customers).
 
-[Unreleased]: https://github.com/naked-head/ha-ilmeteo/compare/v0.3.2...HEAD
+[Unreleased]: https://github.com/naked-head/ha-ilmeteo/compare/v0.3.3...HEAD
+[0.3.3]: https://github.com/naked-head/ha-ilmeteo/compare/v0.3.2...v0.3.3
 [0.3.2]: https://github.com/naked-head/ha-ilmeteo/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/naked-head/ha-ilmeteo/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/naked-head/ha-ilmeteo/compare/v0.2.0...v0.3.0

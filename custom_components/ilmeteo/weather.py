@@ -187,12 +187,19 @@ class IlMeteoWeather(CoordinatorEntity[IlMeteoCoordinator], WeatherEntity):
 # ------------------------------------------------------------------
 
 def _iso_date(date_str: str | None) -> str:
-    """Convert 'DD/MM/YYYY' to an ISO date string."""
+    """Convert 'DD/MM/YYYY' to an ISO date string.
+
+    The parsed datetime is naive but already represents *local* Italian
+    time (scraped from an Italian site with no UTC indication). It must be
+    *labeled* as local (attach tzinfo) rather than *converted* from UTC to
+    local — `dt_util.as_local()` does the latter and would silently shift
+    the value by the UTC offset (e.g. +2h in CEST), which is wrong here.
+    """
     if not date_str:
         return dt_util.now().isoformat()
     try:
         dt = datetime.strptime(date_str, "%d/%m/%Y")
-        return dt_util.as_local(dt).isoformat()
+        return dt.replace(tzinfo=dt_util.DEFAULT_TIME_ZONE).isoformat()
     except ValueError:
         return dt_util.now().isoformat()
 
@@ -200,13 +207,17 @@ def _iso_date(date_str: str | None) -> str:
 def _parse_slot_time(
     date_str: str | None, time_str: str | None, ref: datetime | None = None
 ) -> datetime | None:
-    """Combine 'DD/MM/YYYY' + 'HH.MM' into a local datetime."""
+    """Combine 'DD/MM/YYYY' + 'HH.MM' into a local datetime.
+
+    See _iso_date() for why we attach local tzinfo directly instead of
+    calling dt_util.as_local() on a naive datetime.
+    """
     if not date_str or not time_str:
         return None
     try:
         d = datetime.strptime(date_str, "%d/%m/%Y")
         hour = int(time_str.split(".")[0])
         dt = d.replace(hour=hour, minute=0, second=0, microsecond=0)
-        return dt_util.as_local(dt)
+        return dt.replace(tzinfo=dt_util.DEFAULT_TIME_ZONE)
     except (ValueError, IndexError):
         return None

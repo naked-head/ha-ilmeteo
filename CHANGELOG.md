@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.3.4] - 2026-06-20
+### Fixed
+- Timezone bug in the weather entity: forecast slot timestamps were computed
+  with `dt_util.as_local()` on naive datetimes that already represented local
+  Italian time. `as_local()` treats naive input as UTC and converts it,
+  silently shifting every parsed time by the local UTC offset (+2h in CEST).
+  This caused the "current conditions" to display the wrong 3-hour slot
+  (e.g. showing the 14:00 reading instead of 11:00 when queried mid-morning).
+  Fixed by attaching local tzinfo directly instead of converting from UTC.
+
 ## [0.3.3] - 2026-06-20
 ### Fixed
 - README: replaced relative image/link paths with absolute URLs (HACS does not resolve relative paths and strips the `src` attribute — see hacs/integration#4787).
@@ -43,8 +53,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Initial draft of the integration based on the official iLMeteo REST API
   (later abandoned because it is reserved for business customers).
 
-[Unreleased]: https://github.com/naked-head/ha-ilmeteo/compare/v0.3.3...HEAD
-[0.3.3]: https://github.com/naked-head/ha-ilmeteo/compare/v0.3.2...v0.3.3
+[Unreleased]: https://github.com/naked-head/ha-ilmeteo/compare/v0.3.4...HEAD
+[0.3.4]: https://github.com/naked-head/ha-ilmeteo/compare/v0.3.3...v0.3.4
 [0.3.2]: https://github.com/naked-head/ha-ilmeteo/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/naked-head/ha-ilmeteo/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/naked-head/ha-ilmeteo/compare/v0.2.0...v0.3.0

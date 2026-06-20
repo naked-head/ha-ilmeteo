@@ -259,16 +259,31 @@ def wind_bearing(direction: str | None) -> float | None:
 def parse_real1(html_text: str) -> dict[str, Any]:
     """Parse the real-time conditions box (type=real1).
 
-    Markup is a single bullet line, e.g.:
-        <a ...>Sole e caldo</a> ore 12:00* Temperatura: <b>34°C</b>
-        Umidità: 24%
-        Vento: debole - WNW 6 km/h
+    Markup (simplified, see tests/fixtures/real1_roma.html for the full
+    real example this was built from):
 
-    Returns a dict with condition_text, hour ("HH:MM"), temperature,
-    humidity, wind_dir, wind_speed, wind_desc.
+        <td class="simbolo"><span class="... ss-smallN ..."></span></td>
+        <td class="situazione">
+            <div class="previsione">
+                <a ...>CONDITION TEXT</a>
+                <span>ore HH:MM*</span>
+            </div>
+            Temperatura: <b style="color:red">NN&deg;C</b><br>
+            Umidit&agrave;: NN%<br>
+            Vento: DESC - DIR NN&nbsp;km/h
+        </td>
+
+    Two things make this trickier than it looks: the <b> around the
+    temperature carries an inline style (no bare '<b>' to match), and the
+    page uses HTML entities (&agrave;, &nbsp;, &deg;) rather than literal
+    characters. We isolate the relevant cell, strip tags and unescape
+    entities first (via _clean()), then regex the resulting plain text —
+    the same robust approach used for the tri1/day1 boxes — rather than
+    pattern-matching the raw markup directly.
     """
     result: dict[str, Any] = {
         "condition_text": None,
+        "condition_code": None,
         "hour": None,
         "temperature": None,
         "humidity": None,
@@ -277,27 +292,39 @@ def parse_real1(html_text: str) -> dict[str, Any]:
         "wind_desc": None,
     }
 
-    # Condition text: first <a ...>TEXT</a> inside the list item
-    cond_m = re.search(r"<a[^>]*>([^<]+)</a>", html_text)
-    if cond_m:
-        result["condition_text"] = _clean(cond_m.group(1))
+    # Condition sprite code, for day/night handling consistent with the
+    # tri1/day1 boxes (the >100 = night convention).
+    code_m = re.search(r"ss-small(\d+\w*)", html_text)
+    if code_m:
+        result["condition_code"] = code_m.group(1)
 
-    hour_m = re.search(r"ore\s+(\d{1,2}:\d{2})", html_text)
+    # Isolate the "situazione" cell specifically — the page also has an
+    # unrelated <a> for the city name in the title bar, earlier in the
+    # document, which a generic "first <a>" match would wrongly pick up.
+    block_m = re.search(r'<td class="situazione">(.*?)</td>', html_text, re.S)
+    block = block_m.group(1) if block_m else html_text
+    text = _clean(block)
+
+    hour_m = re.search(r"ore\s+(\d{1,2}:\d{2})", text)
     if hour_m:
         result["hour"] = hour_m.group(1)
 
-    temp_m = re.search(r"Temperatura:\s*<b>\s*(-?\d+[.,]?\d*)", html_text)
+    cond_m = re.match(r"(.*?)\s+ore\s+\d", text)
+    if cond_m:
+        result["condition_text"] = cond_m.group(1).strip()
+
+    temp_m = re.search(r"Temperatura:\s*(-?\d+[.,]?\d*)", text)
     if temp_m:
         result["temperature"] = float(temp_m.group(1).replace(",", "."))
 
-    hum_m = re.search(r"Umidit[àa]:\s*(\d+[.,]?\d*)", html_text)
+    hum_m = re.search(r"Umidit[àa]:\s*(\d+[.,]?\d*)", text)
     if hum_m:
         result["humidity"] = float(hum_m.group(1).replace(",", "."))
 
-    # "Vento: debole - WNW 6 km/h"
+    # "Vento: debole - WNW 8 km/h" (after cleaning, &nbsp; is a real space)
     wind_m = re.search(
         r"Vento:\s*([a-zàèìòù]+)\s*-\s*([A-Z]+)\s+(\d+[.,]?\d*)\s*km/h",
-        html_text,
+        text,
         re.I,
     )
     if wind_m:

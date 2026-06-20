@@ -105,17 +105,12 @@ class IlMeteoWeather(CoordinatorEntity[IlMeteoCoordinator], WeatherEntity):
     @property
     def condition(self) -> str | None:
         cur = self._current
-        if not cur.get("condition_text"):
+        if not cur.get("condition_text") and not cur.get("condition_code"):
             return None
-        # real1 has no night-sprite code (unlike tri1's >100 convention), so
-        # day/night can't be read from the source. Approximate using a fixed
-        # daylight window instead — good enough for the icon, not exact.
-        now_hour = dt_util.now().hour
-        is_night = not (6 <= now_hour < 21)
-        condition = map_condition(cur.get("condition_text"), None)
-        if is_night and condition == "sunny":
-            return "clear-night"
-        return condition
+        # real1 carries its own sprite code (same >100 = night convention
+        # as tri1/day1), so day/night comes straight from iLMeteo — no
+        # need to approximate it from the local clock.
+        return map_condition(cur.get("condition_text"), cur.get("condition_code"))
 
     # ------------------------------------------------------------------
     # Forecasts

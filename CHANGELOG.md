@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-06-20
+### Fixed
+- `parse_real1` rewritten against genuine HTML source (the 0.4.0 version
+  was reverse-engineered from a markdown-rendered copy of the page, not
+  the real markup, and failed to parse on first deploy). Three issues
+  fixed: the temperature `<b>` tag carries an inline style attribute
+  (`<b style="color:red">`, not bare `<b>`); the page uses HTML entities
+  (`&agrave;`, `&nbsp;`, `&deg;`) rather than literal characters; an
+  earlier, unrelated `<a>` link (the city name in the title bar) could be
+  mistakenly matched as the condition text.
+### Changed
+- Current-conditions day/night handling now uses real1's own sprite code
+  (same `>100` = night convention as tri1/day1) instead of a hardcoded
+  6–21 daylight-hour approximation.
+### Added
+- Three regression tests covering the issues above, built from the actual
+  HTML source rather than a reconstructed fixture.
+
 ## [0.4.0] - 2026-06-20
 ### Added
 - True real-time current conditions, sourced from iLMeteo's `real1` box
@@ -84,7 +102,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Initial draft of the integration based on the official iLMeteo REST API
   (later abandoned because it is reserved for business customers).
 
-[Unreleased]: https://github.com/naked-head/ha-ilmeteo/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/naked-head/ha-ilmeteo/compare/v0.4.1...HEAD
+[0.4.1]: https://github.com/naked-head/ha-ilmeteo/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/naked-head/ha-ilmeteo/compare/v0.3.4...v0.4.0
 [0.3.4]: https://github.com/naked-head/ha-ilmeteo/compare/v0.3.3...v0.3.4
 [0.3.3]: https://github.com/naked-head/ha-ilmeteo/compare/v0.3.2...v0.3.3

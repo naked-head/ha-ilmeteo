@@ -86,24 +86,52 @@ def test_dataset_provinces_sorted():
 
 # --- real1 (real-time current conditions) parser tests ---
 
-REAL1_SAMPLE = os.path.join(os.path.dirname(__file__), "fixtures", "real1_rapolano.html")
+REAL1_SAMPLE = os.path.join(os.path.dirname(__file__), "fixtures", "real1_roma.html")
 
 
 def test_real1_parses_current_conditions():
     with open(REAL1_SAMPLE, encoding="utf-8") as f:
         data = parse_real1(f.read())
     assert data["condition_text"] == "Sole e caldo"
-    assert data["hour"] == "12:00"
-    assert data["temperature"] == 34.0
-    assert data["humidity"] == 24.0
+    assert data["condition_code"] == "2"
+    assert data["hour"] == "12:30"
+    assert data["temperature"] == 35.0
+    assert data["humidity"] == 21.0
     assert data["wind_dir"] == "WNW"
-    assert data["wind_speed"] == 6.0
+    assert data["wind_speed"] == 8.0
     assert data["wind_desc"] == "debole"
+
+
+def test_real1_handles_styled_temperature_tag():
+    # Regression test: the <b> around the temperature carries an inline
+    # style (<b style="color:red">), not a bare '<b>' — a naive literal-tag
+    # match would silently find nothing and raise IlMeteoParseError.
+    with open(REAL1_SAMPLE, encoding="utf-8") as f:
+        data = parse_real1(f.read())
+    assert data["temperature"] is not None
+
+
+def test_real1_handles_html_entities():
+    # Regression test: the page uses HTML entities (&agrave;, &nbsp;, &deg;)
+    # rather than literal characters; values must still parse correctly.
+    with open(REAL1_SAMPLE, encoding="utf-8") as f:
+        data = parse_real1(f.read())
+    assert data["humidity"] == 21.0  # from "Umidit&agrave;: 21%"
+    assert data["wind_speed"] == 8.0  # from "8&nbsp;km/h"
+
+
+def test_real1_ignores_unrelated_title_bar_link():
+    # Regression test: the page has an earlier, unrelated <a> for the city
+    # name in the title bar — must not be picked up as the condition text.
+    with open(REAL1_SAMPLE, encoding="utf-8") as f:
+        data = parse_real1(f.read())
+    assert data["condition_text"] != "Roma"
+    assert data["condition_text"] == "Sole e caldo"
 
 
 # --- day1 (official daily min/max) parser tests ---
 
-DAY1_SAMPLE = os.path.join(os.path.dirname(__file__), "fixtures", "day1_rapolano.html")
+DAY1_SAMPLE = os.path.join(os.path.dirname(__file__), "fixtures", "day1_roma.html")
 
 
 def test_day1_parses_six_days():
@@ -112,8 +140,14 @@ def test_day1_parses_six_days():
     assert len(days) == 6
 
 
-def test_day1_values_match_official_site():
-    # Ground truth cross-checked against ilmeteo.it/meteo/rapolano+terme
+def test_day1_parses_all_fields_correctly():
+    # NOTE: these exact min/max/probability values were originally
+    # cross-checked against the live ilmeteo.it/meteo/rapolano+terme page
+    # during development (see CHANGELOG v0.3.4/v0.4.0) to validate the
+    # *parsing logic*. The fixture has since been relabeled "Roma" for
+    # test-suite consistency, but the numbers themselves were not
+    # re-verified against Roma's live forecast (which changes daily
+    # anyway). This test checks correct parsing, not live accuracy.
     with open(DAY1_SAMPLE, encoding="utf-8") as f:
         days = parse_day1(f.read())
     expected = [

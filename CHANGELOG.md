@@ -38,7 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Automatic day/night handling for weather conditions.
 - Regex-based HTML parser (no extra dependencies) with unit tests.
 
-## [0.1.0] - 2026-06-19
+## [0.1.0] - 2026-06-12
 ### Added
 - Initial draft of the integration based on the official iLMeteo REST API
   (later abandoned because it is reserved for business customers).

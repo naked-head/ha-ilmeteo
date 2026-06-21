@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-06-20
+### Added
+- Diagnostics platform (`diagnostics.py`): a "Download diagnostics" button
+  on the integration's device page now exports the tracked location, the
+  last update's success/exception state, and the most recently parsed
+  data from all three box widgets. No redaction needed: the integration 
+  has no API token to protect since v0.2.0.
+
 ## [0.5.0] - 2026-06-20
 ### Added
 - CI workflow (`.github/workflows/test.yml`) running the test suite on
@@ -117,12 +125,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Automatic day/night handling for weather conditions.
 - Regex-based HTML parser (no extra dependencies) with unit tests.
 
-## [0.1.0] - 2026-06-19
+## [0.1.0] - 2026-06-12
 ### Added
 - Initial draft of the integration based on the official iLMeteo REST API
   (later abandoned because it is reserved for business customers).
 
-[Unreleased]: https://github.com/naked-head/ha-ilmeteo/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/naked-head/ha-ilmeteo/compare/v0.5.1...HEAD
+[0.5.1]: https://github.com/naked-head/ha-ilmeteo/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/naked-head/ha-ilmeteo/compare/v0.4.1...v0.5.0
 [0.4.1]: https://github.com/naked-head/ha-ilmeteo/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/naked-head/ha-ilmeteo/compare/v0.3.4...v0.4.0

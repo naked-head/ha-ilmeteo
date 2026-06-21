@@ -1,14 +1,32 @@
 """Constants for the iLMeteo.it integration."""
 
 DOMAIN = "ilmeteo"
-PLATFORMS = ["weather"]
+PLATFORMS = ["weather", "sensor"]
 
 DEFAULT_SCAN_INTERVAL = 1800  # seconds (30 minutes)
 DEFAULT_NUM_DAYS = 6
 
-# Config entry keys
+# Config entry keys (entry.data — set once at creation/reconfigure)
 CONF_CITTA = "citta"
 CONF_PLACE_NAME = "place_name"
+CONF_SITE_NUMBER = "site_number"
+
+# Config entry options keys (entry.options — user-adjustable via Options flow)
+OPT_ENABLED_SENSORS = "enabled_sensors"
+
+# Identifiers for the optional dedicated sensors, used both as the
+# entry.options list values and as unique_id/translation_key suffixes.
+SENSOR_TEMPERATURE = "temperature"
+SENSOR_HUMIDITY = "humidity"
+SENSOR_PRECIPITATION_PROBABILITY = "precipitation_probability"
+SENSOR_WIND_SPEED = "wind_speed"
+
+ALL_OPTIONAL_SENSORS = [
+    SENSOR_TEMPERATURE,
+    SENSOR_HUMIDITY,
+    SENSOR_PRECIPITATION_PROBABILITY,
+    SENSOR_WIND_SPEED,
+]
 
 # ---------------------------------------------------------------------------
 # Condition mapping

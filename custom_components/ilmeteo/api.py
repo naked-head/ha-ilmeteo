@@ -86,23 +86,12 @@ class IlMeteoScraper:
         return days
 
     async def fetch_current(self) -> dict[str, Any]:
-        """Fetch the real-time conditions box (type=real1).
-
-        Unlike the 3-hourly box, this reflects the actual current hour, not
-        a fixed forecast slot, so it never goes stale or "jumps forward"
-        once a slot elapses.
-        """
+        """Fetch the real-time conditions box (type=real1)."""
         text = await self._get_box(type_="real1")
         return parse_real1(text)
 
     async def fetch_daily_summary(self, num_days: int = 6) -> list[dict[str, Any]]:
-        """Fetch the official daily min/max box (type=day1) for all days at once.
-
-        This reflects iLMeteo's own daily aggregate (computed from their full
-        model run, not just the 5 samples in the 3-hourly box), so the daily
-        low in particular is materially more accurate than what can be
-        derived from the tri1 box alone.
-        """
+        """Fetch the official daily min/max box (type=day1) for all days at once."""
         text = await self._get_box(type_="day1", days=num_days)
         return parse_day1(text)
 
@@ -129,12 +118,7 @@ class IlMeteoScraper:
 # ---------------------------------------------------------------------------
 
 def parse_box(html_text: str) -> dict[str, Any]:
-    """Parse a single box-widget HTML page into a structured dict.
-
-    Uses regex rather than BeautifulSoup to avoid adding a dependency to the
-    integration (HA discourages heavy requirements). The markup is stable and
-    line-oriented, so regex is adequate and fast.
-    """
+    """Parse a single box-widget HTML page into a structured dict."""
     result: dict[str, Any] = {"city": None, "date": None, "hours": []}
 
     # --- City + date from the title block ---
@@ -257,30 +241,7 @@ def wind_bearing(direction: str | None) -> float | None:
 
 
 def parse_real1(html_text: str) -> dict[str, Any]:
-    """Parse the real-time conditions box (type=real1).
-
-    Markup (simplified, see tests/fixtures/real1_roma.html for the full
-    real example this was built from):
-
-        <td class="simbolo"><span class="... ss-smallN ..."></span></td>
-        <td class="situazione">
-            <div class="previsione">
-                <a ...>CONDITION TEXT</a>
-                <span>ore HH:MM*</span>
-            </div>
-            Temperatura: <b style="color:red">NN&deg;C</b><br>
-            Umidit&agrave;: NN%<br>
-            Vento: DESC - DIR NN&nbsp;km/h
-        </td>
-
-    Two things make this trickier than it looks: the <b> around the
-    temperature carries an inline style (no bare '<b>' to match), and the
-    page uses HTML entities (&agrave;, &nbsp;, &deg;) rather than literal
-    characters. We isolate the relevant cell, strip tags and unescape
-    entities first (via _clean()), then regex the resulting plain text —
-    the same robust approach used for the tri1/day1 boxes — rather than
-    pattern-matching the raw markup directly.
-    """
+    """Parse the real-time conditions box (type=real1)."""
     result: dict[str, Any] = {
         "condition_text": None,
         "condition_code": None,
@@ -339,17 +300,7 @@ def parse_real1(html_text: str) -> dict[str, Any]:
 
 
 def parse_day1(html_text: str) -> list[dict[str, Any]]:
-    """Parse the official daily min/max box (type=day1).
-
-    Each day is a <!-- day:begin --> ... <!-- day:end --> block containing a
-    day-name link, a condition sprite, T min/max cells, wind direction +
-    speed, and a precipitation-probability mini bar chart with the % as
-    text (e.g. '&nbsp;5%' or '25%&nbsp;').
-
-    Returns a list of dicts (ordered today -> future), one per day, with:
-    day_label, condition_code, temp_min, temp_max, wind_dir, wind_speed,
-    precipitation_probability.
-    """
+    """Parse the official daily min/max box (type=day1)."""
     days: list[dict[str, Any]] = []
     blocks = re.findall(r"<!-- day:begin -->(.*?)<!-- day:end -->", html_text, re.S)
 
@@ -371,11 +322,6 @@ def parse_day1(html_text: str) -> list[dict[str, Any]]:
         wind_dir = _clean(cells[4]) or None
         wind_speed = _num(cells[5])
 
-        # The precipitation-probability cell contains a nested mini-table
-        # (a colored bar + a text cell) whose own <td> tags throw off simple
-        # cell-index counting, AND whose inline style can contain its own
-        # misleading '%' (e.g. width='100%'). Strip all tags first so only
-        # visible text remains, then search that for the real figure.
         precip_prob = None
         prob_m = re.search(r"(\d+)\s*%", _clean(block))
         if prob_m:

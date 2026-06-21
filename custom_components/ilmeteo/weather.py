@@ -21,7 +21,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.util import dt as dt_util
 
 from .api import wind_bearing
-from .const import CONF_CITTA, CONF_PLACE_NAME, DOMAIN, map_condition
+from .const import CONF_PLACE_NAME, CONF_SITE_NUMBER, DOMAIN, map_condition
 from .coordinator import IlMeteoCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -54,13 +54,22 @@ class IlMeteoWeather(CoordinatorEntity[IlMeteoCoordinator], WeatherEntity):
     ) -> None:
         super().__init__(coordinator)
         self._place_name = entry.data[CONF_PLACE_NAME]
-        self._attr_unique_id = f"{DOMAIN}_{entry.data[CONF_CITTA]}"
+        self._site_number = entry.data[CONF_SITE_NUMBER]
+        # unique_id and device identifier are tied to entry_id, never to the
+        # tracked location, so both survive a reconfigure (location change)
+        # unchanged. Only the *displayed* name below tracks the real place.
+        self._attr_unique_id = f"{entry.entry_id}_weather"
         self._attr_device_info = {
-            "identifiers": {(DOMAIN, str(entry.data[CONF_CITTA]))},
+            "identifiers": {(DOMAIN, entry.entry_id)},
             "name": f"iLMeteo.it {self._place_name}",
             "manufacturer": "iLMeteo.it",
             "entry_type": "service",
         }
+
+    @property
+    def suggested_object_id(self) -> str | None:
+        """Generic, location-independent entity_id seed."""
+        return f"ilmeteo_site_{self._site_number}"
 
     # ------------------------------------------------------------------
     # Helpers to navigate coordinator data
@@ -183,14 +192,7 @@ class IlMeteoWeather(CoordinatorEntity[IlMeteoCoordinator], WeatherEntity):
 # ------------------------------------------------------------------
 
 def _iso_date(date_str: str | None) -> str:
-    """Convert 'DD/MM/YYYY' to an ISO date string.
-
-    The parsed datetime is naive but already represents *local* Italian
-    time (scraped from an Italian site with no UTC indication). It must be
-    *labeled* as local (attach tzinfo) rather than *converted* from UTC to
-    local — `dt_util.as_local()` does the latter and would silently shift
-    the value by the UTC offset (e.g. +2h in CEST), which is wrong here.
-    """
+    """Convert 'DD/MM/YYYY' to an ISO date string."""
     if not date_str:
         return dt_util.now().isoformat()
     try:
@@ -203,11 +205,7 @@ def _iso_date(date_str: str | None) -> str:
 def _parse_slot_time(
     date_str: str | None, time_str: str | None
 ) -> datetime | None:
-    """Combine 'DD/MM/YYYY' + 'HH.MM' into a local datetime.
-
-    See _iso_date() for why we attach local tzinfo directly instead of
-    calling dt_util.as_local() on a naive datetime.
-    """
+    """Combine 'DD/MM/YYYY' + 'HH.MM' into a local datetime"""
     if not date_str or not time_str:
         return None
     try:

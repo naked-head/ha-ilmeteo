@@ -21,15 +21,49 @@
         "data": {
           "city": "Municipality"
         }
+      },
+      "reconfigure_region": {
+        "title": "iLMeteo.it — Change location: Region",
+        "description": "Select the new region. The instance name and configured sensors are not affected.",
+        "data": {
+          "region": "Region"
+        }
+      },
+      "reconfigure_province": {
+        "title": "iLMeteo.it — Change location: Province",
+        "description": "Region: {region}. Select the province.",
+        "data": {
+          "province": "Province"
+        }
+      },
+      "reconfigure_city": {
+        "title": "iLMeteo.it — Change location: Municipality",
+        "description": "{province} ({region}). Select the new municipality.",
+        "data": {
+          "city": "Municipality"
+        }
       }
     },
     "error": {
       "cannot_connect": "Could not connect to iLMeteo.it. Please try again later.",
       "no_data": "No weather data available for this municipality.",
-      "invalid_city": "Invalid municipality."
+      "invalid_city": "Invalid municipality.",
+      "already_configured": "This municipality is already tracked by another instance of the integration."
     },
     "abort": {
-      "already_configured": "This municipality is already configured."
+      "already_configured": "This municipality is already configured.",
+      "reconfigure_successful": "Location updated successfully."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "iLMeteo.it — Dedicated sensors",
+        "description": "Select which dedicated sensors to create, in addition to the main weather entity. Useful for long-term statistics/history graphs, which weather entity attributes cannot provide. Deselecting an already-enabled sensor deletes it, losing its history.",
+        "data": {
+          "enabled_sensors": "Sensors to create"
+        }
+      }
     }
   },
   "issues": {

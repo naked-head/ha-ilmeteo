@@ -21,15 +21,49 @@
         "data": {
           "city": "Comune"
         }
+      },
+      "reconfigure_region": {
+        "title": "iLMeteo.it — Cambia località: Regione",
+        "description": "Seleziona la nuova regione. Nome dell'istanza e sensori configurati non cambiano.",
+        "data": {
+          "region": "Regione"
+        }
+      },
+      "reconfigure_province": {
+        "title": "iLMeteo.it — Cambia località: Provincia",
+        "description": "Regione: {region}. Seleziona la provincia.",
+        "data": {
+          "province": "Provincia"
+        }
+      },
+      "reconfigure_city": {
+        "title": "iLMeteo.it — Cambia località: Comune",
+        "description": "{province} ({region}). Seleziona il nuovo comune.",
+        "data": {
+          "city": "Comune"
+        }
       }
     },
     "error": {
       "cannot_connect": "Impossibile connettersi a iLMeteo.it. Riprova più tardi.",
       "no_data": "Nessun dato meteo disponibile per questo comune.",
-      "invalid_city": "Comune non valido."
+      "invalid_city": "Comune non valido.",
+      "already_configured": "Questo comune è già tracciato da un'altra istanza dell'integrazione."
     },
     "abort": {
-      "already_configured": "Questo comune è già configurato."
+      "already_configured": "Questo comune è già configurato.",
+      "reconfigure_successful": "Località aggiornata con successo."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "iLMeteo.it — Sensori dedicati",
+        "description": "Seleziona quali sensori dedicati creare, oltre all'entità meteo principale. Utile per avere grafici storici (statistiche a lungo termine), cosa che gli attributi dell'entità meteo non permettono. Deselezionare un sensore già attivo lo elimina, perdendo il relativo storico.",
+        "data": {
+          "enabled_sensors": "Sensori da creare"
+        }
+      }
     }
   },
   "issues": {

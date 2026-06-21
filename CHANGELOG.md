@@ -7,13 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-06-21
+### Added
+- **Optional dedicated sensors** (temperature, humidity, precipitation
+  probability, wind speed), togglable per-instance via the integration's
+  Options flow. Off by default for all instances, new and existing.
+  Unlike weather-entity attributes, these have `state_class` and so work
+  with Home Assistant's long-term statistics / history graphs.
+- **Reconfigure flow**: change which municipality an existing instance
+  tracks (same region/province/municipality picker as initial setup)
+  without recreating the integration.
+### Changed
+- **Entity identifiers decoupled from location entirely.** `unique_id`
+  (for both the weather entity and any enabled sensors) is now tied to
+  the config entry itself, not to the tracked municipality, and entity
+  IDs use a generic, sequential, permanently-assigned identifier
+  (`weather.ilmeteo_site_1`, `weather.ilmeteo_site_2`, ...) instead of
+  embedding the place name. Site numbers are tracked in a small
+  persistent counter and are never reused, even after the corresponding
+  instance is removed. The *displayed* name still reflects the real
+  location and updates freely on reconfigure — only the technical
+  identifier is now permanently stable, so dashboards and automations
+  keep working across a location change.
+- Deselecting a previously-enabled sensor deletes it (and its history) —
+  a deliberate choice over hiding/disabling it, for predictability.
+### Notes
+- This is a from-scratch redesign of entity identity. No migration
+  path is provided from pre-0.6.0 entity IDs — existing instances should
+  be removed and re-added.
+
 ## [0.5.1] - 2026-06-20
 ### Added
 - Diagnostics platform (`diagnostics.py`): a "Download diagnostics" button
   on the integration's device page now exports the tracked location, the
   last update's success/exception state, and the most recently parsed
-  data from all three box widgets. No redaction needed: the integration 
-  has no API token to protect since v0.2.0.
+  data from all three box widgets.
 
 ## [0.5.0] - 2026-06-20
 ### Added
@@ -130,7 +158,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Initial draft of the integration based on the official iLMeteo REST API
   (later abandoned because it is reserved for business customers).
 
-[Unreleased]: https://github.com/naked-head/ha-ilmeteo/compare/v0.5.1...HEAD
+[Unreleased]: https://github.com/naked-head/ha-ilmeteo/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/naked-head/ha-ilmeteo/compare/v0.5.1...v0.6.0
 [0.5.1]: https://github.com/naked-head/ha-ilmeteo/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/naked-head/ha-ilmeteo/compare/v0.4.1...v0.5.0
 [0.4.1]: https://github.com/naked-head/ha-ilmeteo/compare/v0.4.0...v0.4.1

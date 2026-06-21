@@ -70,6 +70,18 @@ The full list of Italian municipalities (8,218 municipalities, 110 provinces, 20
 > `scripts/build_locations.py` and stored compressed (~67 KB) in
 > `custom_components/ilmeteo/data/locations.json.gz`.
 
+### Entity naming
+
+Each instance gets a generic, permanent identifier — `weather.ilmeteo_site_1`, `weather.ilmeteo_site_2`, etc. — assigned once at creation and never reused, even if that instance is later removed. This is intentional: the *displayed* name (e.g. "iLMeteo.it Rome") does track the real location and can change freely (including via Reconfigure, below), but the technical entity ID never does — so your automations and dashboards keep working across a location change.
+
+### Changing the tracked location
+
+Open the integration's three-dot menu → **Reconfigure** to point an existing instance at a different municipality (same region/province/municipality picker as initial setup). This only changes *where the data comes from* — the entity IDs, device, and any enabled sensors (below) are left untouched.
+
+### Optional dedicated sensors
+
+Besides the main `weather` entity, you can optionally enable dedicated `sensor` entities (temperature, humidity, precipitation probability, wind speed) via the integration's **Configure** (Options) menu. These exist specifically to support Home Assistant's long-term statistics and history graphs, which weather-entity attributes cannot provide (attributes have no `state_class`). They are **off by default** — nothing changes for existing installs until you opt in. Deselecting an enabled sensor deletes it, including its history.
+
 ## Exposed data
 
 **Current conditions** *(real-time box)*: `temperature`, `humidity`, `wind_speed`, `wind_bearing`, `condition`

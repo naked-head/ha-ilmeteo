@@ -1,15 +1,4 @@
-"""iLMeteo.it scraper client.
-
-Since the official REST API is enterprise-only, this client scrapes the
-free public "box" forecast widget that iLMeteo provides for embedding on
-third-party sites:
-
-    https://www.ilmeteo.it/box/previsioni.php?type=tri1&g=<day>&citta=<id>...
-
-The widget is rendered server-side as static HTML (no JS required), with
-each 3-hour forecast row delimited by <!-- hour:begin --> markers and a
-``<tr class="tb-riga1|tb-riga2">`` structure of 9 cells.
-"""
+"""iLMeteo.it box-widget scraper client."""
 from __future__ import annotations
 
 import html
@@ -23,7 +12,7 @@ _LOGGER = logging.getLogger(__name__)
 
 BOX_BASE_URL = "https://www.ilmeteo.it/box/previsioni.php"
 
-# Fixed query params that keep the layout we parse. type=tri1 = triorario (type B).
+# type=tri1 -> triorario (3-hourly) box layout
 _DEFAULT_PARAMS = {
     "type": "tri1",
     "width": "500",
@@ -45,14 +34,14 @@ class IlMeteoParseError(IlMeteoError):
 
 
 class IlMeteoScraper:
-    """Async client that fetches and parses the iLMeteo box widget."""
+    """Async client for the iLMeteo box widgets."""
 
     def __init__(self, citta: str | int, session: aiohttp.ClientSession) -> None:
         self._citta = str(citta)
         self._session = session
 
     async def fetch_day(self, day: int = 0) -> dict[str, Any]:
-        """Fetch and parse a single day (g=day, 0=today)."""
+        """tri1 box, single day (g=day, 0=today)."""
         params = dict(_DEFAULT_PARAMS)
         params["citta"] = self._citta
         params["g"] = str(day)
@@ -70,7 +59,7 @@ class IlMeteoScraper:
         return parse_box(text)
 
     async def fetch_forecast(self, num_days: int = 6) -> list[dict[str, Any]]:
-        """Fetch multiple consecutive days. Returns a list of parsed days."""
+        """tri1 box, multiple consecutive days."""
         days = []
         for g in range(num_days):
             try:
@@ -79,24 +68,23 @@ class IlMeteoScraper:
                     days.append(day)
             except IlMeteoError as err:
                 _LOGGER.warning("Failed to fetch day %s: %s", g, err)
-                # Stop on first failure rather than spamming requests
                 break
         if not days:
             raise IlMeteoError("No forecast days could be retrieved")
         return days
 
     async def fetch_current(self) -> dict[str, Any]:
-        """Fetch the real-time conditions box (type=real1)."""
+        """real1 box: true current-hour conditions."""
         text = await self._get_box(type_="real1")
         return parse_real1(text)
 
     async def fetch_daily_summary(self, num_days: int = 6) -> list[dict[str, Any]]:
-        """Fetch the official daily min/max box (type=day1) for all days at once."""
+        """day1 box: official daily min/max + precip probability."""
         text = await self._get_box(type_="day1", days=num_days)
         return parse_day1(text)
 
     async def _get_box(self, type_: str, **extra: Any) -> str:
-        """Fetch a box widget page of the given type and return raw HTML."""
+        """Fetch a box widget page and return raw HTML."""
         params = dict(_DEFAULT_PARAMS)
         params["citta"] = self._citta
         params["type"] = type_
@@ -114,17 +102,15 @@ class IlMeteoScraper:
 
 
 # ---------------------------------------------------------------------------
-# Pure HTML parsing (no HA / aiohttp dependency, easy to unit-test)
+# HTML parsing
 # ---------------------------------------------------------------------------
 
 def parse_box(html_text: str) -> dict[str, Any]:
-    """Parse a single box-widget HTML page into a structured dict."""
+    """Parse the tri1 box into {city, date, hours: [...]}."""
     result: dict[str, Any] = {"city": None, "date": None, "hours": []}
 
-    # --- City + date from the title block ---
-    title_match = re.search(
-        r'<div class="left">(.*?)</div>', html_text, re.S
-    )
+    # City + date
+    title_match = re.search(r'<div class="left">(.*?)</div>', html_text, re.S)
     if title_match:
         block = title_match.group(1)
         city_m = re.search(r"<a[^>]*>(.*?)</a>", block, re.S)
@@ -134,16 +120,13 @@ def parse_box(html_text: str) -> dict[str, Any]:
         if date_m:
             result["date"] = date_m.group(1)
 
-    # --- Hourly rows ---
-    rows = re.findall(
-        r'<tr class="tb-riga[12]">(.*?)</tr>', html_text, re.S
-    )
+    # Hourly rows
+    rows = re.findall(r'<tr class="tb-riga[12]">(.*?)</tr>', html_text, re.S)
     for row in rows:
         cells = re.findall(r"<td[^>]*>(.*?)</td>", row, re.S)
         if len(cells) < 9:
             continue
 
-        # Condition code from sprite class ss-smallN
         code = None
         code_m = re.search(r"ss-small(\d+\w*)", cells[1])
         if code_m:
@@ -181,7 +164,7 @@ def _clean(text: str) -> str:
 
 
 def _num(text: str) -> float | None:
-    """Extract the first (signed, decimal) number from a cell."""
+    """Extract the first decimal number from a cell."""
     text = html.unescape(re.sub(r"<[^>]+>", " ", text))
     m = re.search(r"(-?\d+[.,]?\d*)", text)
     if not m:
@@ -193,7 +176,7 @@ def _num(text: str) -> float | None:
 
 
 def _parse_wind(cell: str) -> tuple[str | None, float | None, str | None]:
-    """Parse a wind cell like 'NW 5 km/h<br>debole'."""
+    """Parse a wind cell, e.g. 'NW 5 km/h<br>debole'."""
     txt = _clean(cell)
     direction = speed = desc = None
     m = re.match(r"([A-Z]+)\s+(\d+)", txt)
@@ -221,27 +204,26 @@ def _parse_precip(cell: str) -> float:
     return 0.0
 
 
-# Map of Italian 16-wind-rose abbreviations to degrees
+# 16-point compass -> degrees
 WIND_DIR_DEGREES = {
     "N": 0, "NNE": 22.5, "NE": 45, "ENE": 67.5,
     "E": 90, "ESE": 112.5, "SE": 135, "SSE": 157.5,
     "S": 180, "SSW": 202.5, "SW": 225, "WSW": 247.5,
     "W": 270, "WNW": 292.5, "NW": 315, "NNW": 337.5,
-    # Italian variants sometimes use O (Ovest) instead of W
     "O": 270, "NO": 315, "NNO": 337.5, "ONO": 292.5,
     "OSO": 247.5, "SO": 225, "SSO": 202.5,
 }
 
 
 def wind_bearing(direction: str | None) -> float | None:
-    """Convert a compass abbreviation to degrees."""
+    """Compass abbreviation -> degrees."""
     if not direction:
         return None
     return WIND_DIR_DEGREES.get(direction.upper())
 
 
 def parse_real1(html_text: str) -> dict[str, Any]:
-    """Parse the real-time conditions box (type=real1)."""
+    """Parse the real1 box into current-conditions fields."""
     result: dict[str, Any] = {
         "condition_text": None,
         "condition_code": None,
@@ -253,15 +235,11 @@ def parse_real1(html_text: str) -> dict[str, Any]:
         "wind_desc": None,
     }
 
-    # Condition sprite code, for day/night handling consistent with the
-    # tri1/day1 boxes (the >100 = night convention).
     code_m = re.search(r"ss-small(\d+\w*)", html_text)
     if code_m:
         result["condition_code"] = code_m.group(1)
 
-    # Isolate the "situazione" cell specifically — the page also has an
-    # unrelated <a> for the city name in the title bar, earlier in the
-    # document, which a generic "first <a>" match would wrongly pick up.
+    # Isolate the "situazione" cell to avoid an unrelated <a> earlier in the page
     block_m = re.search(r'<td class="situazione">(.*?)</td>', html_text, re.S)
     block = block_m.group(1) if block_m else html_text
     text = _clean(block)
@@ -282,7 +260,6 @@ def parse_real1(html_text: str) -> dict[str, Any]:
     if hum_m:
         result["humidity"] = float(hum_m.group(1).replace(",", "."))
 
-    # "Vento: debole - WNW 8 km/h" (after cleaning, &nbsp; is a real space)
     wind_m = re.search(
         r"Vento:\s*([a-zàèìòù]+)\s*-\s*([A-Z]+)\s+(\d+[.,]?\d*)\s*km/h",
         text,
@@ -300,7 +277,7 @@ def parse_real1(html_text: str) -> dict[str, Any]:
 
 
 def parse_day1(html_text: str) -> list[dict[str, Any]]:
-    """Parse the official daily min/max box (type=day1)."""
+    """Parse the day1 box into a list of per-day summaries."""
     days: list[dict[str, Any]] = []
     blocks = re.findall(r"<!-- day:begin -->(.*?)<!-- day:end -->", html_text, re.S)
 
@@ -322,6 +299,8 @@ def parse_day1(html_text: str) -> list[dict[str, Any]]:
         wind_dir = _clean(cells[4]) or None
         wind_speed = _num(cells[5])
 
+        # Precip % cell has nested markup; search cleaned full block instead
+        # of an indexed cell to avoid both cell-count and width="100%" traps.
         precip_prob = None
         prob_m = re.search(r"(\d+)\s*%", _clean(block))
         if prob_m:

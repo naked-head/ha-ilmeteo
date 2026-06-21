@@ -7,158 +7,99 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.6.1] - 2026-06-21
+### Fixed
+- Entity IDs were not actually location-independent (`weather.ilmeteo_it_roma_ilmeteo_site_2` instead of `weather.ilmeteo_site_2`); fixed by setting `entity_id` directly.
+- Reconfigure now also updates the config entry title, not just the device name.
+### Added
+- Sensor selection is now offered during initial setup, not only via Options.
+- Custom display name, editable at creation and any time via Options.
+- 3 more optional sensors: wind direction, daily min/max temperature. 7 total.
+### Changed
+- Reconfigure resets the display name to the new municipality (editable again via Options).
+
 ## [0.6.0] - 2026-06-21
 ### Added
-- **Optional dedicated sensors** (temperature, humidity, precipitation
-  probability, wind speed), togglable per-instance via the integration's
-  Options flow. Off by default for all instances, new and existing.
-  Unlike weather-entity attributes, these have `state_class` and so work
-  with Home Assistant's long-term statistics / history graphs.
-- **Reconfigure flow**: change which municipality an existing instance
-  tracks (same region/province/municipality picker as initial setup)
-  without recreating the integration.
+- Optional dedicated sensors (temperature, humidity, precipitation probability, wind speed) via Options flow. Off by default.
+- Reconfigure flow: change tracked municipality without recreating the integration.
 ### Changed
-- **Entity identifiers decoupled from location entirely.** `unique_id`
-  (for both the weather entity and any enabled sensors) is now tied to
-  the config entry itself, not to the tracked municipality, and entity
-  IDs use a generic, sequential, permanently-assigned identifier
-  (`weather.ilmeteo_site_1`, `weather.ilmeteo_site_2`, ...) instead of
-  embedding the place name. Site numbers are tracked in a small
-  persistent counter and are never reused, even after the corresponding
-  instance is removed. The *displayed* name still reflects the real
-  location and updates freely on reconfigure — only the technical
-  identifier is now permanently stable, so dashboards and automations
-  keep working across a location change.
-- Deselecting a previously-enabled sensor deletes it (and its history) —
-  a deliberate choice over hiding/disabling it, for predictability.
+- Entity identifiers decoupled from location: `unique_id` tied to the config entry, entity IDs generic and sequential (`weather.ilmeteo_site_1`, ...), never reused. Display name still tracks location.
+- Deselecting a sensor deletes it and its history.
 ### Notes
-- This is a from-scratch redesign of entity identity. No migration
-  path is provided from pre-0.6.0 entity IDs — existing instances should
-  be removed and re-added.
+- From-scratch redesign of entity identity; no migration path from pre-0.6.0 IDs.
 
 ## [0.5.1] - 2026-06-20
 ### Added
-- Diagnostics platform (`diagnostics.py`): a "Download diagnostics" button
-  on the integration's device page now exports the tracked location, the
-  last update's success/exception state, and the most recently parsed
-  data from all three box widgets.
+- Diagnostics platform: download button exporting tracked location, last update status, and cached box data.
 
 ## [0.5.0] - 2026-06-20
 ### Added
-- CI workflow (`.github/workflows/test.yml`) running the test suite on
-  every push/PR against Python 3.12 and 3.13 — previously the tests
-  existed but nothing ran them automatically.
-- Home Assistant Repair issues: a genuine upstream markup change on one of
-  the three box widgets now raises a persistent, visible warning in
-  Settings → System → Repairs (instead of only a log line), and clears
-  itself automatically once that box parses successfully again.
+- CI workflow running the test suite on every push/PR (Python 3.12/3.13).
+- Home Assistant Repair issues for genuine box parsing failures, auto-clearing on recovery.
 ### Changed
-- **Resilience**: each of the three box widgets (real1/day1/tri1) is now
-  fetched and parsed independently. A failure on one — network or
-  parsing — no longer fails the whole coordinator update; the entity
-  falls back to the last successfully parsed data for that specific box
-  instead of going entirely unavailable. A Repair issue is raised only
-  for genuine parsing failures (likely a layout change), not for
-  transient network errors, to avoid noisy false alarms.
-- `async_unload_entry` now clears any open Repair issues for the removed
-  location, avoiding orphaned warnings.
+- Each box (real1/day1/tri1) fetched and parsed independently; a failure on one falls back to last-known-good data instead of failing the whole update.
+- `async_unload_entry` clears open Repair issues on removal.
 
 ## [0.4.1] - 2026-06-20
 ### Fixed
-- `parse_real1` rewritten against genuine HTML source (the 0.4.0 version
-  was reverse-engineered from a markdown-rendered copy of the page, not
-  the real markup, and failed to parse on first deploy). Three issues
-  fixed: the temperature `<b>` tag carries an inline style attribute
-  (`<b style="color:red">`, not bare `<b>`); the page uses HTML entities
-  (`&agrave;`, `&nbsp;`, `&deg;`) rather than literal characters; an
-  earlier, unrelated `<a>` link (the city name in the title bar) could be
-  mistakenly matched as the condition text.
+- `parse_real1` rewritten against genuine HTML: styled `<b>` tag, HTML entities, unrelated `<a>` link.
 ### Changed
-- Current-conditions day/night handling now uses real1's own sprite code
-  (same `>100` = night convention as tri1/day1) instead of a hardcoded
-  6–21 daylight-hour approximation.
+- Day/night handling now uses real1's own sprite code instead of a fixed hour range.
 ### Added
-- Three regression tests covering the issues above, built from the actual
-  HTML source rather than a reconstructed fixture.
+- Regression tests for the issues above.
 
 ## [0.4.0] - 2026-06-20
 ### Added
-- True real-time current conditions, sourced from iLMeteo's `real1` box
-  (an actual current-hour reading) instead of approximating from the
-  nearest 3-hourly forecast slot. Eliminates the "jumps forward after each
-  3-hour mark" behavior entirely, not just mitigates it.
-- Daily forecast min/max now sourced from iLMeteo's official `day1` daily
-  summary box (their own model aggregate across the full day) instead of
-  being derived from 5 sparse 3-hourly samples. Verified to match the
-  public site's forecast strip exactly across a 6-day window.
-- `precipitation_probability` field on the daily forecast (previously
-  unavailable).
-- Unit tests for both new parsers, including a regression test for a
-  nested-markup parsing bug found during development (a precipitation-cell
-  mini-table was throwing off cell-index counting and, separately, its own
-  inline `width="100%"` style was being misread as the data value).
+- True real-time current conditions from the `real1` box.
+- Daily min/max sourced from the official `day1` box instead of derived from hourly samples.
+- `precipitation_probability` field on the daily forecast.
+- Unit tests for both new parsers.
 ### Changed
-- `weather.py`: removed the "closest forecast slot" matching logic for
-  current conditions entirely — no longer needed now that real-time data
-  is available directly.
+- Removed the "closest forecast slot" matching logic for current conditions.
 ### Removed
-- The two daily-low and current-conditions approximation caveats from the
-  README — both underlying limitations are now fully resolved rather than
-  documented as known issues.
+- Daily-low and current-conditions approximation caveats from the README (now fully resolved).
 
 ## [0.3.4] - 2026-06-20
 ### Fixed
-- Timezone bug in the weather entity: forecast slot timestamps were computed
-  with `dt_util.as_local()` on naive datetimes that already represented local
-  Italian time. `as_local()` treats naive input as UTC and converts it,
-  silently shifting every parsed time by the local UTC offset (+2h in CEST).
-  This caused the "current conditions" to display the wrong 3-hour slot
-  (e.g. showing the 14:00 reading instead of 11:00 when queried mid-morning).
-  Fixed by attaching local tzinfo directly instead of converting from UTC.
+- Timezone bug: `dt_util.as_local()` on naive local datetimes shifted forecast slot times by the UTC offset. Fixed by attaching local tzinfo directly.
 
 ## [0.3.3] - 2026-06-19
 ### Fixed
-- README: replaced relative image and link paths with absolute URLs. HACS
-  does not resolve relative paths in rendered READMEs and strips the `src`/
-  `href` attribute entirely (see hacs/integration#4787, unfixed upstream).
-  This affected the logo, the License badge, the CHANGELOG link, and the
-  demo screenshot.
+- README: relative image/link paths replaced with absolute URLs (HACS does not resolve relative paths).
 ### Added
-- README: HACS direct-install button (`my.home-assistant.io` badge).
-- README: demo screenshot of the weather card in the Home Assistant UI.
+- README: HACS direct-install button, demo screenshot.
 
 ## [0.3.2] - 2026-06-19
 ### Changed
-- Extended the entity attribution to "Dati meteo forniti da iLMeteo.it (www.ilmeteo.it)".
+- Extended entity attribution to "Dati meteo forniti da iLMeteo.it (www.ilmeteo.it)".
 
 ## [0.3.1] - 2026-06-19
 ### Changed
-- Device name extended to `iLMeteo.it <location>` (including the domain).
+- Device name extended to `iLMeteo.it <location>`.
 ### Added
-- Official iLMeteo.it logo as the integration icon (`brand/`) and in the README.
+- Official iLMeteo.it logo as integration icon and in the README.
 
 ## [0.3.0] - 2026-06-19
 ### Added
-- Cascading location selection: region → province → municipality (no manual codes).
-- Bundled dataset of 8,218 Italian municipalities as compressed JSON (~67 KB).
-- Dataset regeneration script at `scripts/build_locations.py`.
+- Cascading location selection: region → province → municipality.
+- Bundled dataset of 8,218 Italian municipalities (~67 KB compressed).
+- Dataset regeneration script.
 - Unit tests for the location dataset.
 
 ## [0.2.0] - 2026-06-19
 ### Changed
-- Complete backend rewrite: from the REST client (enterprise-only API) to
-  scraping iLMeteo.it's free public forecast box widget.
+- Backend rewrite: from REST client (enterprise-only API) to public box widget scraping.
 ### Added
 - Daily and hourly (3-hourly) forecasts.
-- Automatic day/night handling for weather conditions.
-- Regex-based HTML parser (no extra dependencies) with unit tests.
+- Automatic day/night condition handling.
+- Regex-based HTML parser with unit tests.
 
 ## [0.1.0] - 2026-06-12
 ### Added
-- Initial draft of the integration based on the official iLMeteo REST API
-  (later abandoned because it is reserved for business customers).
+- Initial draft based on the official iLMeteo REST API (later abandoned, enterprise-only).
 
-[Unreleased]: https://github.com/naked-head/ha-ilmeteo/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/naked-head/ha-ilmeteo/compare/v0.6.1...HEAD
+[0.6.1]: https://github.com/naked-head/ha-ilmeteo/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/naked-head/ha-ilmeteo/compare/v0.5.1...v0.6.0
 [0.5.1]: https://github.com/naked-head/ha-ilmeteo/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/naked-head/ha-ilmeteo/compare/v0.4.1...v0.5.0

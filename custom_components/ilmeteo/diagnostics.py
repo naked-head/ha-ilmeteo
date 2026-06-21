@@ -1,8 +1,6 @@
 """Diagnostics support for the iLMeteo.it integration.
 
-No redaction is needed here: since v0.2.0 the integration scrapes public,
-unauthenticated box widgets (no API token), so there is nothing sensitive
-in the config entry or in the coordinator's cached data.
+No redaction needed: public scraping, no API token.
 """
 from __future__ import annotations
 
@@ -18,12 +16,7 @@ from .coordinator import IlMeteoCoordinator
 async def async_get_config_entry_diagnostics(
     hass: HomeAssistant, entry: ConfigEntry
 ) -> dict[str, Any]:
-    """Return diagnostics for a config entry.
-
-    Includes the location being tracked, whether the last coordinator
-    update succeeded, the last exception (if any), and the most recently
-    parsed data from all three box widgets (real1/day1/tri1).
-    """
+    """Tracked location, last update status, and cached box data."""
     coordinator: IlMeteoCoordinator = hass.data[DOMAIN][entry.entry_id]
 
     return {

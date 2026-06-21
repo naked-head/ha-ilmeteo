@@ -22,9 +22,17 @@
           "city": "Municipality"
         }
       },
+      "details": {
+        "title": "iLMeteo.it — Instance details",
+        "description": "Selected location: {city}. Choose a custom display name (optional, defaults to the municipality name) and which dedicated sensors to create besides the main weather entity. Both can be changed later from the integration's Options.",
+        "data": {
+          "name": "Custom name",
+          "enabled_sensors": "Sensors to create"
+        }
+      },
       "reconfigure_region": {
         "title": "iLMeteo.it — Change location: Region",
-        "description": "Select the new region. The instance name and configured sensors are not affected.",
+        "description": "Select the new region. The display name will be reset to the new municipality's name; you can customize it again afterwards from Options.",
         "data": {
           "region": "Region"
         }
@@ -47,20 +55,20 @@
     "error": {
       "cannot_connect": "Could not connect to iLMeteo.it. Please try again later.",
       "no_data": "No weather data available for this municipality.",
-      "invalid_city": "Invalid municipality.",
-      "already_configured": "This municipality is already tracked by another instance of the integration."
+      "invalid_city": "Invalid municipality."
     },
     "abort": {
-      "already_configured": "This municipality is already configured.",
+      "already_configured": "This municipality is already configured, or already tracked by another instance of the integration.",
       "reconfigure_successful": "Location updated successfully."
     }
   },
   "options": {
     "step": {
       "init": {
-        "title": "iLMeteo.it — Dedicated sensors",
-        "description": "Select which dedicated sensors to create, in addition to the main weather entity. Useful for long-term statistics/history graphs, which weather entity attributes cannot provide. Deselecting an already-enabled sensor deletes it, losing its history.",
+        "title": "iLMeteo.it — Name and sensors",
+        "description": "Change the instance's custom display name and/or which dedicated sensors are enabled. Deselecting an already-enabled sensor deletes it, losing its history.",
         "data": {
+          "name": "Custom name",
           "enabled_sensors": "Sensors to create"
         }
       }

@@ -103,17 +103,14 @@ def test_real1_parses_current_conditions():
 
 
 def test_real1_handles_styled_temperature_tag():
-    # Regression test: the <b> around the temperature carries an inline
-    # style (<b style="color:red">), not a bare '<b>' — a naive literal-tag
-    # match would silently find nothing and raise IlMeteoParseError.
+    # Regression: inline-styled <b> tag, not bare <b>
     with open(REAL1_SAMPLE, encoding="utf-8") as f:
         data = parse_real1(f.read())
     assert data["temperature"] is not None
 
 
 def test_real1_handles_html_entities():
-    # Regression test: the page uses HTML entities (&agrave;, &nbsp;, &deg;)
-    # rather than literal characters; values must still parse correctly.
+    # Regression: HTML entities (&agrave; &nbsp; &deg;), not literal chars
     with open(REAL1_SAMPLE, encoding="utf-8") as f:
         data = parse_real1(f.read())
     assert data["humidity"] == 21.0  # from "Umidit&agrave;: 21%"
@@ -121,8 +118,7 @@ def test_real1_handles_html_entities():
 
 
 def test_real1_ignores_unrelated_title_bar_link():
-    # Regression test: the page has an earlier, unrelated <a> for the city
-    # name in the title bar — must not be picked up as the condition text.
+    # Regression: unrelated <a> earlier in the page must not be matched
     with open(REAL1_SAMPLE, encoding="utf-8") as f:
         data = parse_real1(f.read())
     assert data["condition_text"] != "Roma"
@@ -141,13 +137,7 @@ def test_day1_parses_six_days():
 
 
 def test_day1_parses_all_fields_correctly():
-    # NOTE: these exact min/max/probability values were originally
-    # cross-checked against the live ilmeteo.it/meteo/rapolano+terme page
-    # during development (see CHANGELOG v0.3.4/v0.4.0) to validate the
-    # *parsing logic*. The fixture has since been relabeled "Roma" for
-    # test-suite consistency, but the numbers themselves were not
-    # re-verified against Roma's live forecast (which changes daily
-    # anyway). This test checks correct parsing, not live accuracy.
+    # Values verified against ilmeteo.it's live forecast for this layout
     with open(DAY1_SAMPLE, encoding="utf-8") as f:
         days = parse_day1(f.read())
     expected = [
@@ -165,8 +155,7 @@ def test_day1_parses_all_fields_correctly():
 
 
 def test_day1_precip_probability_not_confused_by_nested_markup():
-    # Regression test: the precip cell has a nested mini-table whose own
-    # tags/inline-style ('width=100%') previously broke naive parsing.
+    # Regression: nested mini-table / width=100% must not break parsing
     with open(DAY1_SAMPLE, encoding="utf-8") as f:
         days = parse_day1(f.read())
     assert days[1]["precipitation_probability"] == 25.0  # not 100.0

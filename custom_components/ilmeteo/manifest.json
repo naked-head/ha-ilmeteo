@@ -1,7 +1,7 @@
 {
   "domain": "ilmeteo",
   "name": "iLMeteo.it",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "documentation": "https://github.com/naked-head/ha-ilmeteo",
   "issue_tracker": "https://github.com/naked-head/ha-ilmeteo/issues",
   "requirements": [],

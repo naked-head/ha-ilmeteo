@@ -22,9 +22,17 @@
           "city": "Comune"
         }
       },
+      "details": {
+        "title": "iLMeteo.it — Dettagli istanza",
+        "description": "Località selezionata: {city}. Scegli un nome personalizzato (facoltativo, di default il nome del comune) e quali sensori dedicati creare oltre all'entità meteo principale. Entrambi sono modificabili in seguito dalle Opzioni dell'integrazione.",
+        "data": {
+          "name": "Nome personalizzato",
+          "enabled_sensors": "Sensori da creare"
+        }
+      },
       "reconfigure_region": {
         "title": "iLMeteo.it — Cambia località: Regione",
-        "description": "Seleziona la nuova regione. Nome dell'istanza e sensori configurati non cambiano.",
+        "description": "Seleziona la nuova regione. Nome personalizzato e sensori configurati non cambiano se già impostati, ma il nome verrà reimpostato sul nome del nuovo comune; potrai personalizzarlo di nuovo dalle Opzioni.",
         "data": {
           "region": "Regione"
         }
@@ -47,20 +55,20 @@
     "error": {
       "cannot_connect": "Impossibile connettersi a iLMeteo.it. Riprova più tardi.",
       "no_data": "Nessun dato meteo disponibile per questo comune.",
-      "invalid_city": "Comune non valido.",
-      "already_configured": "Questo comune è già tracciato da un'altra istanza dell'integrazione."
+      "invalid_city": "Comune non valido."
     },
     "abort": {
-      "already_configured": "Questo comune è già configurato.",
+      "already_configured": "Questo comune è già configurato o già tracciato da un'altra istanza dell'integrazione.",
       "reconfigure_successful": "Località aggiornata con successo."
     }
   },
   "options": {
     "step": {
       "init": {
-        "title": "iLMeteo.it — Sensori dedicati",
-        "description": "Seleziona quali sensori dedicati creare, oltre all'entità meteo principale. Utile per avere grafici storici (statistiche a lungo termine), cosa che gli attributi dell'entità meteo non permettono. Deselezionare un sensore già attivo lo elimina, perdendo il relativo storico.",
+        "title": "iLMeteo.it — Nome e sensori",
+        "description": "Modifica il nome personalizzato dell'istanza e/o quali sensori dedicati sono attivi. Deselezionare un sensore già attivo lo elimina, perdendo il relativo storico.",
         "data": {
+          "name": "Nome personalizzato",
           "enabled_sensors": "Sensori da creare"
         }
       }

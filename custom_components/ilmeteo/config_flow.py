@@ -1,23 +1,7 @@
 """Config flow for the iLMeteo.it integration.
 
-Three distinct flows live here:
-
-- Initial setup (``async_step_user`` -> ``province`` -> ``city``): the usual
-  cascading region/province/city picker. Assigns a permanent, generic
-  ``site_number`` to the new entry (e.g. 1, 2, 3...) used to build stable,
-  location-independent entity IDs (``weather.ilmeteo_site_1``). The
-  *displayed* name, by contrast, does track the real place name and is
-  free to change later without touching any identifier.
-
-- Reconfigure (``async_step_reconfigure`` -> ``_province`` -> ``_city``):
-  the same cascading picker, but only updates which location the existing
-  entry tracks (``citta`` / ``place_name``). Site number, unique_ids and
-  any enabled sensors are left untouched — this is intentionally scoped to
-  "where does the data come from", nothing else.
-
-- Options (``OptionsFlowHandler``): a checklist of optional dedicated
-  sensor entities (temperature, humidity, ...) the user can turn on/off
-  independently of the location.
+Flows: initial setup (user -> province -> city -> details), Reconfigure
+(change location only), Options (change name and/or enabled sensors).
 """
 from __future__ import annotations
 
@@ -44,6 +28,9 @@ from .const import (
     SENSOR_HUMIDITY,
     SENSOR_PRECIPITATION_PROBABILITY,
     SENSOR_TEMPERATURE,
+    SENSOR_TEMPERATURE_MAX,
+    SENSOR_TEMPERATURE_MIN,
+    SENSOR_WIND_BEARING,
     SENSOR_WIND_SPEED,
 )
 
@@ -52,6 +39,34 @@ _LOGGER = logging.getLogger(__name__)
 CONF_REGION = "region"
 CONF_PROVINCE = "province"
 CONF_CITY = "city"
+CONF_NAME = "name"
+
+# Shared between the creation "details" step and the Options flow
+_SENSOR_LABELS = {
+    SENSOR_TEMPERATURE: "Temperatura (attuale)",
+    SENSOR_HUMIDITY: "Umidità (attuale)",
+    SENSOR_WIND_SPEED: "Velocità del vento (attuale)",
+    SENSOR_WIND_BEARING: "Direzione del vento (attuale)",
+    SENSOR_TEMPERATURE_MIN: "Temperatura minima (oggi)",
+    SENSOR_TEMPERATURE_MAX: "Temperatura massima (oggi)",
+    SENSOR_PRECIPITATION_PROBABILITY: "Probabilità di precipitazioni (oggi)",
+}
+
+
+def _sensor_selector() -> selector.SelectSelector:
+    """Multi-select checklist widget for optional sensors."""
+    return selector.SelectSelector(
+        selector.SelectSelectorConfig(
+            options=[
+                selector.SelectOptionDict(
+                    value=s, label=_SENSOR_LABELS.get(s, s)
+                )
+                for s in ALL_OPTIONAL_SENSORS
+            ],
+            multiple=True,
+            mode=selector.SelectSelectorMode.LIST,
+        )
+    )
 
 
 _SITE_COUNTER_STORAGE_VERSION = 1
@@ -59,8 +74,8 @@ _SITE_COUNTER_STORAGE_KEY = f"{DOMAIN}_site_counter"
 
 
 async def _next_site_number(hass) -> int:
-    """Return the next site number, persisted independently of which
-    config entries currently exist."""
+    """Next site number; persisted independently of existing entries
+    so numbers are never reused."""
     store: Store[dict] = Store(
         hass, _SITE_COUNTER_STORAGE_VERSION, _SITE_COUNTER_STORAGE_KEY
     )
@@ -71,13 +86,15 @@ async def _next_site_number(hass) -> int:
 
 
 class IlMeteoConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
-    """Cascading config flow: region -> province -> city."""
+    """Cascading config flow: region -> province -> city -> details."""
 
     VERSION = 3
 
     def __init__(self) -> None:
         self._region: str | None = None
         self._province: str | None = None
+        self._citta: str | None = None
+        self._city_name: str | None = None
 
     @staticmethod
     @callback
@@ -157,15 +174,9 @@ class IlMeteoConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     if not day.get("hours"):
                         errors["base"] = "no_data"
                     else:
-                        site_number = await _next_site_number(self.hass)
-                        return self.async_create_entry(
-                            title=city,
-                            data={
-                                CONF_CITTA: citta,
-                                CONF_PLACE_NAME: city,
-                                CONF_SITE_NUMBER: site_number,
-                            },
-                        )
+                        self._citta = citta
+                        self._city_name = city
+                        return await self.async_step_details()
 
         return self.async_show_form(
             step_id="city",
@@ -179,9 +190,39 @@ class IlMeteoConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             },
         )
 
+    async def async_step_details(
+        self, user_input: dict[str, Any] | None = None
+    ) -> config_entries.FlowResult:
+        """Step 4: custom display name + which optional sensors to enable."""
+        if user_input is not None:
+            name = user_input.get(CONF_NAME) or self._city_name
+            site_number = await _next_site_number(self.hass)
+            return self.async_create_entry(
+                title=name,
+                data={
+                    CONF_CITTA: self._citta,
+                    CONF_PLACE_NAME: name,
+                    CONF_SITE_NUMBER: site_number,
+                },
+                options={
+                    OPT_ENABLED_SENSORS: user_input.get(OPT_ENABLED_SENSORS, [])
+                },
+            )
+
+        return self.async_show_form(
+            step_id="details",
+            data_schema=vol.Schema(
+                {
+                    vol.Optional(CONF_NAME, default=self._city_name): str,
+                    vol.Optional(OPT_ENABLED_SENSORS, default=[]): _sensor_selector(),
+                }
+            ),
+            description_placeholders={"city": self._city_name},
+        )
+
     # ------------------------------------------------------------------
-    # Reconfigure — same cascade, but only updates citta/place_name on the
-    # existing entry. Site number and options are left untouched.
+    # Reconfigure — location only, name resets to new city (editable
+    # again via Options), site number and sensors untouched.
     # ------------------------------------------------------------------
 
     async def async_step_reconfigure(
@@ -253,6 +294,7 @@ class IlMeteoConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     else:
                         return self.async_update_reload_and_abort(
                             entry,
+                            title=city,
                             data_updates={
                                 CONF_CITTA: citta,
                                 CONF_PLACE_NAME: city,
@@ -273,7 +315,7 @@ class IlMeteoConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
 
 class OptionsFlowHandler(config_entries.OptionsFlow):
-    """Options flow: pick which optional dedicated sensors to expose."""
+    """Options flow: change the display name and/or enabled sensors."""
 
     def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
         self._entry = config_entry
@@ -282,36 +324,32 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         self, user_input: dict[str, Any] | None = None
     ) -> config_entries.FlowResult:
         if user_input is not None:
+            new_name = user_input.get(CONF_NAME) or self._entry.data[CONF_PLACE_NAME]
+
+            # Name lives in entry.data/title, not entry.options — update
+            # it explicitly here rather than via the Options write path.
+            if new_name != self._entry.data.get(CONF_PLACE_NAME):
+                self.hass.config_entries.async_update_entry(
+                    self._entry,
+                    title=new_name,
+                    data={**self._entry.data, CONF_PLACE_NAME: new_name},
+                )
+
             return self.async_create_entry(
                 title="",
                 data={OPT_ENABLED_SENSORS: user_input.get(OPT_ENABLED_SENSORS, [])},
             )
 
-        current = self._entry.options.get(OPT_ENABLED_SENSORS, [])
-        sensor_labels = {
-            SENSOR_TEMPERATURE: "Temperatura",
-            SENSOR_HUMIDITY: "Umidità",
-            SENSOR_PRECIPITATION_PROBABILITY: "Probabilità di precipitazioni",
-            SENSOR_WIND_SPEED: "Velocità del vento",
-        }
+        current_name = self._entry.data.get(CONF_PLACE_NAME, "")
+        current_sensors = self._entry.options.get(OPT_ENABLED_SENSORS, [])
         return self.async_show_form(
             step_id="init",
             data_schema=vol.Schema(
                 {
+                    vol.Optional(CONF_NAME, default=current_name): str,
                     vol.Optional(
-                        OPT_ENABLED_SENSORS, default=current
-                    ): selector.SelectSelector(
-                        selector.SelectSelectorConfig(
-                            options=[
-                                selector.SelectOptionDict(
-                                    value=s, label=sensor_labels.get(s, s)
-                                )
-                                for s in ALL_OPTIONAL_SENSORS
-                            ],
-                            multiple=True,
-                            mode=selector.SelectSelectorMode.LIST,
-                        )
-                    ),
+                        OPT_ENABLED_SENSORS, default=current_sensors
+                    ): _sensor_selector(),
                 }
             ),
         )

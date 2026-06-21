@@ -35,9 +35,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
-    # Reload whenever the Options flow is submitted (e.g. the user changes
-    # which optional sensors are enabled), so sensor.py re-runs and picks
-    # up the new selection — Home Assistant does not do this automatically.
+    # Reload on options change (e.g. enabled sensors) so platforms re-run
     entry.async_on_unload(entry.add_update_listener(_async_update_listener))
 
     return True
@@ -53,8 +51,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if unload_ok:
         hass.data[DOMAIN].pop(entry.entry_id)
-        # Clear any Repair issues left open for this location so removing
-        # the integration doesn't leave orphaned warnings behind.
+        # Clear any open Repair issues for this location
         citta = str(entry.data[CONF_CITTA])
         for box_type in BOX_TYPES:
             ir.async_delete_issue(hass, DOMAIN, issue_id_for(citta, box_type))

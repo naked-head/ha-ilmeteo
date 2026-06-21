@@ -1,14 +1,8 @@
 """Optional dedicated sensor entities for iLMeteo.it.
 
-These are off by default for every entry (new or existing) and are turned
-on individually via the integration's Options flow. They exist alongside
-the weather entity specifically so their values can be tracked in Home
-Assistant's long-term statistics (graphs, the Statistics card, etc.) —
-something a weather entity's attributes cannot do, since attributes have
-no state_class.
-
-Each sensor's unique_id is tied to the config entry (entry_id), exactly
-like the weather entity, so it survives a location reconfigure unchanged.
+Off by default; enabled via the Options flow or at initial setup. Single-
+value snapshots of today only (current reading or day1 row 0), never the
+multi-day forecast.
 """
 from __future__ import annotations
 
@@ -31,6 +25,7 @@ from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
+from .api import wind_bearing
 from .const import (
     ALL_OPTIONAL_SENSORS,
     CONF_PLACE_NAME,
@@ -40,13 +35,16 @@ from .const import (
     SENSOR_HUMIDITY,
     SENSOR_PRECIPITATION_PROBABILITY,
     SENSOR_TEMPERATURE,
+    SENSOR_TEMPERATURE_MAX,
+    SENSOR_TEMPERATURE_MIN,
+    SENSOR_WIND_BEARING,
     SENSOR_WIND_SPEED,
 )
 from .coordinator import IlMeteoCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
-# Per-sensor static config: (friendly name suffix, device_class, unit, icon)
+# name, device_class, unit, icon per sensor type
 _SENSOR_SPECS: dict[str, dict[str, Any]] = {
     SENSOR_TEMPERATURE: {
         "name": "Temperatura",
@@ -60,17 +58,35 @@ _SENSOR_SPECS: dict[str, dict[str, Any]] = {
         "unit": PERCENTAGE,
         "icon": None,
     },
-    SENSOR_PRECIPITATION_PROBABILITY: {
-        "name": "Probabilità di precipitazioni",
-        "device_class": None,
-        "unit": PERCENTAGE,
-        "icon": "mdi:weather-rainy",
-    },
     SENSOR_WIND_SPEED: {
         "name": "Velocità del vento",
         "device_class": SensorDeviceClass.WIND_SPEED,
         "unit": UnitOfSpeed.KILOMETERS_PER_HOUR,
         "icon": None,
+    },
+    SENSOR_WIND_BEARING: {
+        "name": "Direzione del vento",
+        "device_class": None,
+        "unit": "°",
+        "icon": "mdi:compass-outline",
+    },
+    SENSOR_TEMPERATURE_MIN: {
+        "name": "Temperatura minima (oggi)",
+        "device_class": SensorDeviceClass.TEMPERATURE,
+        "unit": UnitOfTemperature.CELSIUS,
+        "icon": None,
+    },
+    SENSOR_TEMPERATURE_MAX: {
+        "name": "Temperatura massima (oggi)",
+        "device_class": SensorDeviceClass.TEMPERATURE,
+        "unit": UnitOfTemperature.CELSIUS,
+        "icon": None,
+    },
+    SENSOR_PRECIPITATION_PROBABILITY: {
+        "name": "Probabilità di precipitazioni",
+        "device_class": None,
+        "unit": PERCENTAGE,
+        "icon": "mdi:weather-rainy",
     },
 }
 
@@ -80,11 +96,11 @@ async def async_setup_entry(
     entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set up the enabled optional sensors, and remove any deselected ones."""
+    """Add enabled sensors, remove deselected ones."""
     coordinator: IlMeteoCoordinator = hass.data[DOMAIN][entry.entry_id]
     enabled = set(entry.options.get(OPT_ENABLED_SENSORS, []))
 
-    # Add the currently-enabled sensors.
+    # Add currently-enabled sensors
     entities = [
         IlMeteoSensor(coordinator, entry, sensor_type)
         for sensor_type in ALL_OPTIONAL_SENSORS
@@ -93,9 +109,7 @@ async def async_setup_entry(
     if entities:
         async_add_entities(entities)
 
-    # Remove any sensor the user has since deselected. Just not adding it
-    # again above would leave it registered and permanently "unavailable" —
-    # the user explicitly asked for deselecting to mean deletion.
+    # Remove any deselected sensor (deselect = delete, not just unavailable)
     registry = er.async_get(hass)
     for sensor_type in ALL_OPTIONAL_SENSORS:
         if sensor_type in enabled:
@@ -121,8 +135,8 @@ class IlMeteoSensor(CoordinatorEntity[IlMeteoCoordinator], SensorEntity):
     ) -> None:
         super().__init__(coordinator)
         self._sensor_type = sensor_type
-        self._site_number = entry.data[CONF_SITE_NUMBER]
         place_name = entry.data[CONF_PLACE_NAME]
+        site_number = entry.data[CONF_SITE_NUMBER]
 
         spec = _SENSOR_SPECS[sensor_type]
         self._attr_name = spec["name"]
@@ -130,7 +144,7 @@ class IlMeteoSensor(CoordinatorEntity[IlMeteoCoordinator], SensorEntity):
         self._attr_native_unit_of_measurement = spec["unit"]
         self._attr_icon = spec["icon"]
 
-        # Same identifiers as the weather entity -> groups under one device.
+        # Same device identifiers as the weather entity -> groups together
         self._attr_unique_id = f"{entry.entry_id}_{sensor_type}"
         self._attr_device_info = {
             "identifiers": {(DOMAIN, entry.entry_id)},
@@ -139,26 +153,28 @@ class IlMeteoSensor(CoordinatorEntity[IlMeteoCoordinator], SensorEntity):
             "entry_type": "service",
         }
 
-    @property
-    def suggested_object_id(self) -> str | None:
-        """Generic, location-independent entity_id seed (see weather.py)."""
-        return f"ilmeteo_site_{self._site_number}_{self._sensor_type}"
+        # Generic entity_id, set directly (only applies on first creation)
+        self.entity_id = f"sensor.ilmeteo_site_{site_number}_{sensor_type}"
 
     @property
     def native_value(self) -> float | None:
         data = self.coordinator.data or {}
-
-        if self._sensor_type == SENSOR_PRECIPITATION_PROBABILITY:
-            daily = data.get("daily") or []
-            if not daily:
-                return None
-            return daily[0].get("precipitation_probability")
-
         current = data.get("current") or {}
+        daily = data.get("daily") or []
+        today = daily[0] if daily else {}
+
         if self._sensor_type == SENSOR_TEMPERATURE:
             return current.get("temperature")
         if self._sensor_type == SENSOR_HUMIDITY:
             return current.get("humidity")
         if self._sensor_type == SENSOR_WIND_SPEED:
             return current.get("wind_speed")
+        if self._sensor_type == SENSOR_WIND_BEARING:
+            return wind_bearing(current.get("wind_dir"))
+        if self._sensor_type == SENSOR_TEMPERATURE_MIN:
+            return today.get("temp_min")
+        if self._sensor_type == SENSOR_TEMPERATURE_MAX:
+            return today.get("temp_max")
+        if self._sensor_type == SENSOR_PRECIPITATION_PROBABILITY:
+            return today.get("precipitation_probability")
         return None

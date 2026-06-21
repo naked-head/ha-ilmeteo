@@ -1,4 +1,4 @@
-"""iLMeteo.it Weather entity (multi-box scraper backend)."""
+"""iLMeteo.it Weather entity (real1 + day1 + tri1 backend)."""
 from __future__ import annotations
 
 import logging
@@ -32,13 +32,13 @@ async def async_setup_entry(
     entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set up the iLMeteo weather entity from a config entry."""
+    """Set up the weather entity for a config entry."""
     coordinator: IlMeteoCoordinator = hass.data[DOMAIN][entry.entry_id]
     async_add_entities([IlMeteoWeather(coordinator, entry)])
 
 
 class IlMeteoWeather(CoordinatorEntity[IlMeteoCoordinator], WeatherEntity):
-    """Weather entity backed by iLMeteo's real1 + day1 + tri1 box widgets."""
+    """Weather entity backed by iLMeteo's real1 + day1 + tri1 boxes."""
 
     _attr_has_entity_name = True
     _attr_name = None
@@ -55,9 +55,8 @@ class IlMeteoWeather(CoordinatorEntity[IlMeteoCoordinator], WeatherEntity):
         super().__init__(coordinator)
         self._place_name = entry.data[CONF_PLACE_NAME]
         self._site_number = entry.data[CONF_SITE_NUMBER]
-        # unique_id and device identifier are tied to entry_id, never to the
-        # tracked location, so both survive a reconfigure (location change)
-        # unchanged. Only the *displayed* name below tracks the real place.
+
+        # Identity tied to entry_id, not location -> survives reconfigure
         self._attr_unique_id = f"{entry.entry_id}_weather"
         self._attr_device_info = {
             "identifiers": {(DOMAIN, entry.entry_id)},
@@ -66,33 +65,27 @@ class IlMeteoWeather(CoordinatorEntity[IlMeteoCoordinator], WeatherEntity):
             "entry_type": "service",
         }
 
-    @property
-    def suggested_object_id(self) -> str | None:
-        """Generic, location-independent entity_id seed."""
-        return f"ilmeteo_site_{self._site_number}"
+        # Generic entity_id, set directly (only applies on first creation)
+        self.entity_id = f"weather.ilmeteo_site_{self._site_number}"
 
     # ------------------------------------------------------------------
-    # Helpers to navigate coordinator data
+    # Coordinator data accessors
     # ------------------------------------------------------------------
 
     @property
     def _current(self) -> dict[str, Any]:
-        """Real-time conditions (type=real1) — a genuine current reading."""
         return (self.coordinator.data or {}).get("current") or {}
 
     @property
     def _daily(self) -> list[dict[str, Any]]:
-        """Official daily min/max + precipitation probability (type=day1)."""
         return (self.coordinator.data or {}).get("daily") or []
 
     @property
     def _days(self) -> list[dict[str, Any]]:
-        """3-hourly forecast detail (type=tri1), used for hourly forecast."""
         return (self.coordinator.data or {}).get("days") or []
 
     # ------------------------------------------------------------------
-    # Current conditions — from real1, a true current-hour reading, not a
-    # forecast slot. No more "closest slot" guessing or timezone pitfalls.
+    # Current conditions (real1)
     # ------------------------------------------------------------------
 
     @property
@@ -116,9 +109,6 @@ class IlMeteoWeather(CoordinatorEntity[IlMeteoCoordinator], WeatherEntity):
         cur = self._current
         if not cur.get("condition_text") and not cur.get("condition_code"):
             return None
-        # real1 carries its own sprite code (same >100 = night convention
-        # as tri1/day1), so day/night comes straight from iLMeteo — no
-        # need to approximate it from the local clock.
         return map_condition(cur.get("condition_text"), cur.get("condition_code"))
 
     # ------------------------------------------------------------------
@@ -126,10 +116,7 @@ class IlMeteoWeather(CoordinatorEntity[IlMeteoCoordinator], WeatherEntity):
     # ------------------------------------------------------------------
 
     async def async_forecast_daily(self) -> list[Forecast] | None:
-        """Daily forecast using day1's official min/max (accurate) plus
-        tri1's hourly data for fields day1 doesn't provide (precipitation
-        amount). Falls back to tri1-only aggregation if day1 is unavailable.
-        """
+        """Daily forecast: min/max/precip% from day1, precip amount from tri1."""
         daily = self._daily
         days = self._days
         if not daily:
@@ -137,8 +124,6 @@ class IlMeteoWeather(CoordinatorEntity[IlMeteoCoordinator], WeatherEntity):
 
         forecasts: list[Forecast] = []
         for i, d in enumerate(daily):
-            # Match the corresponding tri1 day (same index = same day) only
-            # for fields day1 doesn't supply, e.g. precipitation amount.
             tri_day = days[i] if i < len(days) else None
             precip = None
             if tri_day:
@@ -163,9 +148,7 @@ class IlMeteoWeather(CoordinatorEntity[IlMeteoCoordinator], WeatherEntity):
         return forecasts or None
 
     async def async_forecast_hourly(self) -> list[Forecast] | None:
-        """Hourly (3-hourly) forecast from tri1 — unchanged, still the best
-        source for this level of detail (wind, humidity, visibility, etc).
-        """
+        """3-hourly forecast from tri1."""
         forecasts: list[Forecast] = []
         for day in self._days:
             for h in day.get("hours") or []:
@@ -192,7 +175,7 @@ class IlMeteoWeather(CoordinatorEntity[IlMeteoCoordinator], WeatherEntity):
 # ------------------------------------------------------------------
 
 def _iso_date(date_str: str | None) -> str:
-    """Convert 'DD/MM/YYYY' to an ISO date string."""
+    """'DD/MM/YYYY' -> ISO string, labeled local (not converted from UTC)."""
     if not date_str:
         return dt_util.now().isoformat()
     try:
@@ -205,7 +188,7 @@ def _iso_date(date_str: str | None) -> str:
 def _parse_slot_time(
     date_str: str | None, time_str: str | None
 ) -> datetime | None:
-    """Combine 'DD/MM/YYYY' + 'HH.MM' into a local datetime"""
+    """'DD/MM/YYYY' + 'HH.MM' -> local datetime."""
     if not date_str or not time_str:
         return None
     try:

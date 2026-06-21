@@ -70,17 +70,24 @@ The full list of Italian municipalities (8,218 municipalities, 110 provinces, 20
 > `scripts/build_locations.py` and stored compressed (~67 KB) in
 > `custom_components/ilmeteo/data/locations.json.gz`.
 
-### Entity naming
+### Entity naming and display name
 
-Each instance gets a generic, permanent identifier — `weather.ilmeteo_site_1`, `weather.ilmeteo_site_2`, etc. — assigned once at creation and never reused, even if that instance is later removed. This is intentional: the *displayed* name (e.g. "iLMeteo.it Rome") does track the real location and can change freely (including via Reconfigure, below), but the technical entity ID never does — so your automations and dashboards keep working across a location change.
+Each instance gets a generic, permanent technical identifier — `weather.ilmeteo_site_1`, `weather.ilmeteo_site_2`, etc. — assigned once at creation and never reused, even if that instance is later removed.
+
+The *displayed* name (shown in the UI, e.g. "iLMeteo.it Rome") is separate and fully customizable: you're asked for it during setup (defaulting to the chosen municipality, editable), and can change it any time afterward via the integration's **Configure** (Options) menu. Changing it never affects the technical entity ID — your automations and dashboards keep working regardless of what you rename things to.
 
 ### Changing the tracked location
 
-Open the integration's three-dot menu → **Reconfigure** to point an existing instance at a different municipality (same region/province/municipality picker as initial setup). This only changes *where the data comes from* — the entity IDs, device, and any enabled sensors (below) are left untouched.
+Open the integration's three-dot menu → **Reconfigure** to point an existing instance at a different municipality (same region/province/municipality picker as initial setup). This changes *where the data comes from*; the display name is reset to the new municipality's name (customize it again via Options if you'd like something else), while entity IDs, the device, and any enabled sensors are left untouched.
 
 ### Optional dedicated sensors
 
-Besides the main `weather` entity, you can optionally enable dedicated `sensor` entities (temperature, humidity, precipitation probability, wind speed) via the integration's **Configure** (Options) menu. These exist specifically to support Home Assistant's long-term statistics and history graphs, which weather-entity attributes cannot provide (attributes have no `state_class`). They are **off by default** — nothing changes for existing installs until you opt in. Deselecting an enabled sensor deletes it, including its history.
+Besides the main `weather` entity, you can enable dedicated `sensor` entities — either during initial setup or any time afterward via **Configure** (Options):
+
+- Temperature, humidity, wind speed, wind direction *(current readings)*
+- Daily minimum and maximum temperature, precipitation probability *(today only — never derived from the multi-day forecast)*
+
+These exist specifically to support Home Assistant's long-term statistics and history graphs, which weather-entity attributes cannot provide (attributes have no `state_class`). They are **off by default** — nothing changes for existing installs until you opt in. Deselecting an enabled sensor deletes it, including its history.
 
 ## Exposed data
 

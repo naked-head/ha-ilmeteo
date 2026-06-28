@@ -131,3 +131,7 @@ MIT — see [LICENSE](https://github.com/naked-head/ha-ilmeteo/blob/main/LICENSE
 ## Disclaimer
 
 This is an unofficial integration and is not affiliated with, endorsed by, or supported by iLMeteo Srl. Weather data is retrieved from the publicly available iLMeteo.it forecast box. Use at your own risk and in accordance with iLMeteo's terms of use.
+
+## Acknowledgements
+
+Built with the assistance of [Claude](https://claude.ai) by Anthropic.

@@ -1,5 +1,7 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/naked-head/ha-ilmeteo/main/images/logo.png" alt="iLMeteo.it" width="120">
+  <a href="https://www.ilmeteo.it/">
+    <img src="https://raw.githubusercontent.com/naked-head/ha-ilmeteo/main/images/logo.png" alt="iLMeteo.it" width="120">
+  </a>
 </p>
 
 # iLMeteo.it — Home Assistant Custom Integration
@@ -13,23 +15,24 @@
 
 A [Home Assistant](https://www.home-assistant.io/) integration that exposes weather data from **[iLMeteo.it](https://www.ilmeteo.it/)** (a popular Italian weather service) as native `weather` entities, with **daily** and **hourly** (3-hourly) forecasts — just like the OpenWeatherMap or Met.no integrations.
 
-> **How it works:** iLMeteo's official REST API is reserved for business customers. Instead, this integration uses three of the **free public forecast box widgets** that iLMeteo provides for embedding on third-party sites (see the [business portals page](https://www.ilmeteo.it/business/portali)): a real-time conditions box for current weather, an official daily-summary box for accurate min/max and rain probability, and a 3-hourly box for detailed hourly forecasts. All are parsed server-side. No token required.
+> **How it works:** [iLMeteo](https://www.ilmeteo.it/)'s official REST API is reserved for business customers. Instead, this integration uses three of the **free public forecast box widgets** that iLMeteo provides for embedding on third-party sites (see the [business portals page](https://www.ilmeteo.it/business/portali)): a real-time conditions box for current weather, an official daily-summary box for accurate min/max and rain probability, and a 3-hourly box for detailed hourly forecasts. All are parsed server-side. No token required.
 
 ---
 
 ## ⚠️ Important notes
 
-- This integration **scrapes** public web pages. There is no contractual stability guarantee: if iLMeteo changes a box's markup, the parser may need an update. Each of the three boxes is fetched independently, so a layout change on one doesn't take the others down — and a genuine parsing failure raises a visible warning in **Settings → System → Repairs** rather than failing silently.
+- This integration **scrapes** public web pages. There is no contractual stability guarantee: if [iLMeteo](https://www.ilmeteo.it/) changes a box's markup, the parser may need an update. Each of the three boxes is fetched independently, so a layout change on one doesn't take the others down — and a genuine parsing failure raises a visible warning in **Settings → System → Repairs** rather than failing silently.
 - Out of respect for iLMeteo's [terms of use](https://www.ilmeteo.it/portale/termini_e_condizioni), the integration shows the attribution "Dati meteo forniti da iLMeteo.it (www.ilmeteo.it)" on the entity and polls at a low frequency (every 30 minutes).
-- Unofficial project, not affiliated with iLMeteo Srl.
-- The "iLMeteo" logo and trademark are property of iLMeteo Srl and are used solely to identify the data source.
+- The device page (Settings → Devices & services → device) includes a "Visit" link to the configured municipality's page on [iLMeteo.it](https://www.ilmeteo.it/).
+- Unofficial project, not affiliated with [iLMeteo Srl](https://www.ilmeteo.it/).
+- The "iLMeteo" logo and trademark are property of [iLMeteo Srl](https://www.ilmeteo.it/) and are used solely to identify the data source.
 
 ---
 
 ## Features
 
 - Native `weather` entity with **genuine real-time current conditions** (not an approximated forecast slot)
-- **Daily forecast** up to 6 days using iLMeteo's own official daily min/max and **precipitation probability** — not derived from sparse hourly samples
+- **Daily forecast** up to 6 days using [iLMeteo](https://www.ilmeteo.it/)'s own official daily min/max and **precipitation probability** — not derived from sparse hourly samples
 - **Hourly forecast** (3-hourly): 5 slots per day with temperature, apparent temperature, humidity, wind, precipitation
 - Automatic day/night condition handling (e.g. `sunny` → `clear-night`)
 - **Multi-location** support: each city is a separate instance
@@ -66,7 +69,7 @@ A [Home Assistant](https://www.home-assistant.io/) integration that exposes weat
 
 The full list of Italian municipalities (8,218 municipalities, 110 provinces, 20 regions) is bundled with the integration, so there is no need to look up codes manually. To add more locations, repeat the procedure.
 
-> The dataset is generated from iLMeteo's official location codes via
+> The dataset is generated from [iLMeteo](https://www.ilmeteo.it/)'s official location codes via
 > `scripts/build_locations.py` and stored compressed (~67 KB) in
 > `custom_components/ilmeteo/data/locations.json.gz`.
 
@@ -109,7 +112,7 @@ python tests/test_parser.py
 
 The tests use a real HTML fixture in `tests/fixtures/`.
 
-To regenerate the bundled location dataset from the official iLMeteo CSV files:
+To regenerate the bundled location dataset from the official [iLMeteo](https://www.ilmeteo.it/) CSV files:
 
 ```bash
 python scripts/build_locations.py codici_comuni.csv codici_province.csv \
@@ -130,7 +133,7 @@ MIT — see [LICENSE](https://github.com/naked-head/ha-ilmeteo/blob/main/LICENSE
 
 ## Disclaimer
 
-This is an unofficial integration and is not affiliated with, endorsed by, or supported by iLMeteo Srl. Weather data is retrieved from the publicly available iLMeteo.it forecast box. Use at your own risk and in accordance with iLMeteo's terms of use.
+This is an unofficial integration and is not affiliated with, endorsed by, or supported by [iLMeteo Srl](https://www.ilmeteo.it/). Weather data is retrieved from the publicly available [iLMeteo.it](https://www.ilmeteo.it/) forecast box. Use at your own risk and in accordance with iLMeteo's [terms of use](https://www.ilmeteo.it/portale/termini_e_condizioni).
 
 ## Acknowledgements
 

@@ -21,7 +21,13 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.util import dt as dt_util
 
 from .api import wind_bearing
-from .const import CONF_PLACE_NAME, CONF_SITE_NUMBER, DOMAIN, map_condition
+from .const import (
+    CONF_PLACE_NAME,
+    CONF_SITE_NUMBER,
+    DEFAULT_INFO_URL,
+    DOMAIN,
+    map_condition,
+)
 from .coordinator import IlMeteoCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -63,10 +69,19 @@ class IlMeteoWeather(CoordinatorEntity[IlMeteoCoordinator], WeatherEntity):
             "name": f"iLMeteo.it {self._place_name}",
             "manufacturer": "iLMeteo.it",
             "entry_type": "service",
+            "configuration_url": self._info_url,
         }
 
         # Generic entity_id, set directly (only applies on first creation)
         self.entity_id = f"weather.ilmeteo_site_{self._site_number}"
+
+    @property
+    def _info_url(self) -> str:
+        """Configured municipality's iLMeteo.it page, or the homepage."""
+        days = self._days
+        if days and days[0].get("url"):
+            return days[0]["url"]
+        return DEFAULT_INFO_URL
 
     # ------------------------------------------------------------------
     # Coordinator data accessors

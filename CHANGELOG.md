@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.6.2] - 2026-06-30
+### Added
+- Device page now links to the configured municipality's iLMeteo.it page (`configuration_url`), shown automatically as a "Visit" link on Settings → Devices & services → device page.
+
 ## [0.6.1] - 2026-06-21
 ### Fixed
 - Entity IDs were not actually location-independent (`weather.ilmeteo_it_roma_ilmeteo_site_2` instead of `weather.ilmeteo_site_2`); fixed by setting `entity_id` directly.
@@ -98,7 +102,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 - Initial draft based on the official iLMeteo REST API (later abandoned, enterprise-only).
 
-[Unreleased]: https://github.com/naked-head/ha-ilmeteo/compare/v0.6.1...HEAD
+[Unreleased]: https://github.com/naked-head/ha-ilmeteo/compare/v0.6.2...HEAD
+[0.6.2]: https://github.com/naked-head/ha-ilmeteo/compare/v0.6.1...v0.6.2
 [0.6.1]: https://github.com/naked-head/ha-ilmeteo/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/naked-head/ha-ilmeteo/compare/v0.5.1...v0.6.0
 [0.5.1]: https://github.com/naked-head/ha-ilmeteo/compare/v0.5.0...v0.5.1

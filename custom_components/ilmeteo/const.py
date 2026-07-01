@@ -5,6 +5,7 @@ PLATFORMS = ["weather", "sensor"]
 
 DEFAULT_SCAN_INTERVAL = 1800  # seconds (30 minutes)
 DEFAULT_NUM_DAYS = 6
+DEFAULT_INFO_URL = "https://www.ilmeteo.it/"
 
 # Config entry data keys
 CONF_CITTA = "citta"

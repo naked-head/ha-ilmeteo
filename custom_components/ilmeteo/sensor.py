@@ -30,6 +30,7 @@ from .const import (
     ALL_OPTIONAL_SENSORS,
     CONF_PLACE_NAME,
     CONF_SITE_NUMBER,
+    DEFAULT_INFO_URL,
     DOMAIN,
     OPT_ENABLED_SENSORS,
     SENSOR_HUMIDITY,
@@ -151,10 +152,19 @@ class IlMeteoSensor(CoordinatorEntity[IlMeteoCoordinator], SensorEntity):
             "name": f"iLMeteo.it {place_name}",
             "manufacturer": "iLMeteo.it",
             "entry_type": "service",
+            "configuration_url": self._info_url,
         }
 
         # Generic entity_id, set directly (only applies on first creation)
         self.entity_id = f"sensor.ilmeteo_site_{site_number}_{sensor_type}"
+
+    @property
+    def _info_url(self) -> str:
+        """Configured municipality's iLMeteo.it page, or the homepage."""
+        days = (self.coordinator.data or {}).get("days") or []
+        if days and days[0].get("url"):
+            return days[0]["url"]
+        return DEFAULT_INFO_URL
 
     @property
     def native_value(self) -> float | None:

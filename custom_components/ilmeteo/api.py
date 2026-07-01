@@ -106,16 +106,17 @@ class IlMeteoScraper:
 # ---------------------------------------------------------------------------
 
 def parse_box(html_text: str) -> dict[str, Any]:
-    """Parse the tri1 box into {city, date, hours: [...]}."""
-    result: dict[str, Any] = {"city": None, "date": None, "hours": []}
+    """Parse the tri1 box into {city, url, date, hours: [...]}."""
+    result: dict[str, Any] = {"city": None, "url": None, "date": None, "hours": []}
 
-    # City + date
+    # City + canonical page URL + date
     title_match = re.search(r'<div class="left">(.*?)</div>', html_text, re.S)
     if title_match:
         block = title_match.group(1)
-        city_m = re.search(r"<a[^>]*>(.*?)</a>", block, re.S)
+        city_m = re.search(r'<a[^>]*href="([^"]+)"[^>]*>(.*?)</a>', block, re.S)
         if city_m:
-            result["city"] = _clean(city_m.group(1))
+            result["url"] = html.unescape(city_m.group(1).strip())
+            result["city"] = _clean(city_m.group(2))
         date_m = re.search(r"(\d{2}/\d{2}/\d{4})", block)
         if date_m:
             result["date"] = date_m.group(1)

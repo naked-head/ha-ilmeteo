@@ -28,6 +28,11 @@ def test_city_and_date():
     assert data["date"] == "19/06/2026"
 
 
+def test_city_url():
+    data = _load()
+    assert data["url"] == "https://www.ilmeteo.it/meteo/roma"
+
+
 def test_hour_count():
     data = _load()
     assert len(data["hours"]) == 5

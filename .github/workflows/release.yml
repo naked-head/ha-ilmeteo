@@ -27,6 +27,18 @@ jobs:
           sed -i 's/"version": ".*"/"version": "${{ steps.version.outputs.VERSION }}"/' \
             custom_components/ilmeteo/manifest.json
 
+      - name: Extract changelog section
+        id: changelog
+        run: |
+          awk -v ver="${{ steps.version.outputs.VERSION }}" '
+            $0 ~ "^## \\[" ver "\\]" { found=1; next }
+            found && /^## \[/ { exit }
+            found && /^\[.*\]: http/ { exit }
+            found { print }
+          ' CHANGELOG.md > release_notes.md
+          echo "Extracted notes:"
+          cat release_notes.md
+
       - name: Create release zip
         run: |
           zip -r ilmeteo.zip custom_components/
@@ -35,8 +47,8 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
-          name: "iLMeteo.it ${{ github.ref_name }}"
+          name: "ha-ilmeteo ${{ github.ref_name }}"
+          body_path: release_notes.md
           draft: false
           prerelease: false
           files: ilmeteo.zip
-          generate_release_notes: true

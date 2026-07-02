@@ -82,18 +82,26 @@ def _dpc_entity_selector() -> selector.EntitySelector:
     )
 
 
-def _notify_targets_selector() -> selector.EntitySelector:
-    """Multi-select picker for notify.mobile_app_* entities.
+def _notify_targets_selector(
+    hass: Any,
+) -> selector.SelectSelector:
+    """Multi-select of available notify.mobile_app_* services.
 
-    Restricted to mobile_app_ targets since those are the only ones that
-    support the companion-app data payload (image, URI action button).
-    New-style notify entities (HA 2026.5+) do not support these fields yet.
+    Built at runtime so the list reflects the devices actually registered
+    in this HA instance. EntitySelector with integration='mobile_app' does
+    not filter correctly; iterating hass.services is the reliable approach.
     """
-    return selector.EntitySelector(
-        selector.EntitySelectorConfig(
-            integration="mobile_app",
-            domain="notify",
+    services = hass.services.async_services().get("notify", {})
+    options = [
+        selector.SelectOptionDict(value=f"notify.{name}", label=f"notify.{name}")
+        for name in sorted(services)
+        if name.startswith("mobile_app_")
+    ]
+    return selector.SelectSelector(
+        selector.SelectSelectorConfig(
+            options=options,
             multiple=True,
+            mode=selector.SelectSelectorMode.LIST,
         )
     )
 
@@ -265,7 +273,7 @@ class IlMeteoConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     vol.Optional(OPT_DPC_ALERT_ENTITY, default=vol.UNDEFINED): _dpc_entity_selector(),
                     vol.Optional(
                         OPT_NOTIFY_TARGETS, default=[]
-                    ): _notify_targets_selector(),
+                    ): _notify_targets_selector(self.hass),
                 }
             ),
             description_placeholders={"city": self._city_name},
@@ -409,7 +417,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                     ): _dpc_entity_selector(),
                     vol.Optional(
                         OPT_NOTIFY_TARGETS, default=current_notify_targets
-                    ): _notify_targets_selector(),
+                    ): _notify_targets_selector(self.hass),
                 }
             ),
         )

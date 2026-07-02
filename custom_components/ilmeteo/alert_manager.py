@@ -114,13 +114,15 @@ class IlMeteoAlertManager:
         notification_id = f"{DOMAIN}_{self.entry_id}_{alert.alert_id}"
         title = f"⚠️ {self.place_name}: {alert.title}"
 
-        # persistent_notification.create renders Markdown in the HA frontend,
-        # so the link is a real clickable anchor there, and the logo image
-        # renders inline too.
+        # persistent_notification renders HTML/Markdown in the HA frontend.
+        # Table layout keeps the logo small (72px) with text alongside.
         panel_message = (
-            f"<img src='{ILMETEO_LOGO_URL}' style='max-width:90px;float:left;margin:0 12px 8px 0;border-radius:8px;'>"
-            f"{alert.message}\n\n"
-            f"🔗 [Dettagli e previsioni complete su iLMeteo.it]({link})"
+            f"<table><tr>"
+            f"<td><img src='{ILMETEO_LOGO_URL}' width='72'></td>"
+            f"<td>&nbsp;&nbsp;</td>"
+            f"<td><b>{alert.title}</b><br>{alert.message}<br><br>"
+            f"🔗 <a href='{link}'>Dettagli e previsioni complete su iLMeteo.it</a></td>"
+            f"</tr></table>"
         )
         await self.hass.services.async_call(
             "persistent_notification",
@@ -129,41 +131,8 @@ class IlMeteoAlertManager:
             blocking=False,
         )
 
-        # Native mobile push via the legacy notify.<name> service, which is the
-        # only way to pass companion-app-specific data (image, URI actions).
-        # notify.send_message (the new 2026.5 entity API) only supports
-        # title/message and silently drops the data payload — see HA discussion
-        # #3684. The user selects entity_ids like "notify.mobile_app_phone";
-        # we split on the first dot to get domain="notify", service="mobile_app_phone".
-        # notify.mobile_app_* is the only supported target (enforced by the
-        # EntitySelector in config_flow.py). It's the legacy companion-app
-        # service and the only one that accepts the full data payload
-        # (image, URI action button). New-style notify entities (HA 2026.5+)
-        # don't support these fields yet — see HA discussion #3684.
-        for target in self.notify_targets:
-            try:
-                domain, service = target.split(".", 1)
-                await self.hass.services.async_call(
-                    domain,
-                    service,
-                    {
-                        "title": title,
-                        "message": alert.message,
-                        "data": {
-                            "image": ILMETEO_LOGO_URL,
-                            "actions": [
-                                {"action": "URI", "title": "Apri iLMeteo.it", "uri": link}
-                            ],
-                        },
-                    },
-                    blocking=True,
-                )
-            except Exception:  # noqa: BLE001 - one bad target must not block the rest
-                _LOGGER.exception(
-                    "Notify target %s failed for alert %s (%s)",
-                    target, alert.alert_id, self.place_name,
-                )
-
+        # Fire the event unconditionally — automations can listen regardless
+        # of whether push targets are configured.
         self.hass.bus.async_fire(
             EVENT_WEATHER_ALERT,
             {
@@ -179,6 +148,61 @@ class IlMeteoAlertManager:
                 "cleared": False,
             },
         )
+
+        # Native mobile push via the legacy notify.mobile_app_* service — the
+        # only channel that supports companion-app data (image, URI action button).
+        # New-style notify entities (HA 2026.5+) don't support these fields yet
+        # — see HA discussion #3684. The selector in config_flow.py restricts
+        # targets to mobile_app_* only.
+        for target in self.notify_targets:
+            self.hass.async_create_task(
+                self._push_with_retry(target, title, alert.message, link)
+            )
+
+    async def _push_with_retry(
+        self, target: str, title: str, message: str, link: str, attempt: int = 0
+    ) -> None:
+        """Push to a notify.mobile_app_* target, retrying if not yet registered.
+
+        The companion app service registers a few seconds after HA setup —
+        retrying up to 5 times (10s apart) covers the typical boot window.
+        """
+        domain, service = target.split(".", 1)
+        if not self.hass.services.has_service(domain, service):
+            if attempt < 5:
+                delay = 10 * (attempt + 1)
+                _LOGGER.debug(
+                    "Notify target %s not yet available, retrying in %ds (attempt %d/5)",
+                    target, delay, attempt + 1,
+                )
+                async def _retry(_attempt=attempt):
+                    await self._push_with_retry(target, title, message, link, _attempt + 1)
+                self.hass.loop.call_later(
+                    delay, lambda: self.hass.async_create_task(_retry())
+                )
+            else:
+                _LOGGER.warning(
+                    "Notify target %s not available after 5 attempts, giving up", target
+                )
+            return
+        try:
+            await self.hass.services.async_call(
+                domain,
+                service,
+                {
+                    "title": title,
+                    "message": message,
+                    "data": {
+                        "image": ILMETEO_LOGO_URL,
+                        "actions": [
+                            {"action": "URI", "title": "Apri iLMeteo.it", "uri": link}
+                        ],
+                    },
+                },
+                blocking=False,
+            )
+        except Exception:  # noqa: BLE001
+            _LOGGER.exception("Push to %s failed", target)
 
     async def _dismiss(self, alert_id: str) -> None:
         notification_id = f"{DOMAIN}_{self.entry_id}_{alert_id}"

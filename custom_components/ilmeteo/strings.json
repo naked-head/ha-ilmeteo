@@ -24,16 +24,13 @@
       },
       "details": {
         "title": "iLMeteo.it — Dettagli istanza",
-        "description": "Località selezionata: {city}. Scegli un nome personalizzato (facoltativo), quali sensori dedicati creare, se abilitare le notifiche di allerta meteo, facoltativamente un'entità sensore della Protezione Civile (integrazione 'DPC Alert' di caiosweet, se installata) come fonte ufficiale aggiuntiva, e facoltativamente uno o più target notify.* a cui inoltrare anche un push oltre alla notifica persistente nativa. Tutto è modificabile in seguito dalle Opzioni.",
+        "description": "Località selezionata: **{city}**\n\nScegli un nome personalizzato (facoltativo), quali sensori dedicati creare e configura le notifiche di allerta meteo.\n\n**Notifiche di allerta meteo**\nAttive per impostazione predefinita. Utilizzano i dati iLMeteo già scaricati come fonte euristica. Per aggiungere i bollettini ufficiali della Protezione Civile, installa l'integrazione [DPC Alert di caiosweet](https://github.com/caiosweet/Home-Assistant-custom-components-DPC-Alert) e seleziona l'entità corrispondente nel campo dedicato.\n\n**Notifiche push aggiuntive**\nLa notifica persistente nativa è sempre inviata. Puoi aggiungere uno o più target `notify.*` per ricevere un push anche sul telefono.\n\nTutto è modificabile in seguito dalle Opzioni.",
         "data": {
           "name": "Nome personalizzato",
           "enabled_sensors": "Sensori da creare",
           "alert_notifications": "Notifiche di allerta meteo",
           "dpc_alert_entity_id": "Entità allerta Protezione Civile (opzionale)",
           "notify_targets": "Notifiche push aggiuntive (opzionale)"
-        },
-        "data_description": {
-          "dpc_alert_entity_id": "Facoltativamente, seleziona un'entità `sensor.dpc_alert` dall'integrazione [DPC Alert](https://github.com/caiosweet/Home-Assistant-custom-components-DPC-Alert) di caiosweet, se installata, per aggiungere i bollettini ufficiali della Protezione Civile come fonte di allerta. Lascia vuoto se non hai quella integrazione."
         }
       },
       "reconfigure_region": {
@@ -72,16 +69,13 @@
     "step": {
       "init": {
         "title": "iLMeteo.it — Nome e sensori",
-        "description": "Modifica il nome personalizzato, quali sensori dedicati sono attivi, se le notifiche di allerta meteo sono abilitate, quale entità sensore della Protezione Civile ('DPC Alert' di caiosweet, se installata) usare come fonte aggiuntiva, e a quali target notify.* inoltrare anche un push (in aggiunta alla notifica persistente nativa, sempre inviata). Deselezionare un sensore già attivo lo elimina, perdendo il relativo storico.",
+        "description": "**Sensori dedicati**\nDeselezionare un sensore già attivo lo elimina, perdendo il relativo storico.\n\n**Notifiche di allerta meteo**\nPer usare i bollettini ufficiali della Protezione Civile come fonte aggiuntiva, installa l'integrazione [DPC Alert di caiosweet](https://github.com/caiosweet/Home-Assistant-custom-components-DPC-Alert) e seleziona l'entità corrispondente nel campo dedicato.\n\n**Notifiche push aggiuntive**\nLa notifica persistente nativa è sempre inviata. Puoi aggiungere uno o più target `notify.*` per ricevere un push anche sul telefono.",
         "data": {
           "name": "Nome personalizzato",
           "enabled_sensors": "Sensori da creare",
           "alert_notifications": "Notifiche di allerta meteo",
           "dpc_alert_entity_id": "Entità allerta Protezione Civile (opzionale)",
           "notify_targets": "Notifiche push aggiuntive (opzionale)"
-        },
-        "data_description": {
-          "dpc_alert_entity_id": "Facoltativamente, seleziona un'entità `sensor.dpc_alert` dall'integrazione [DPC Alert](https://github.com/caiosweet/Home-Assistant-custom-components-DPC-Alert) di caiosweet, se installata, per aggiungere i bollettini ufficiali della Protezione Civile come fonte di allerta. Lascia vuoto se non hai quella integrazione."
         }
       }
     }

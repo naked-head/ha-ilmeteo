@@ -24,16 +24,13 @@
       },
       "details": {
         "title": "iLMeteo.it — Instance details",
-        "description": "Selected location: {city}. Choose a custom display name (optional), which dedicated sensors to create, whether to enable weather alert notifications, optionally a Civil Protection sensor entity (caiosweet's 'DPC Alert' integration, if installed) as an additional official source, and optionally one or more notify.* targets to also push to besides the native persistent notification. Everything can be changed later from Options.",
+        "description": "Selected location: **{city}**\n\nChoose a custom display name (optional), which dedicated sensors to create, and configure weather alert notifications.\n\n**Weather alert notifications**\nOn by default. Uses the iLMeteo data already fetched as a heuristic source. To also include official Civil Protection bulletins, install the [DPC Alert integration by caiosweet](https://github.com/caiosweet/Home-Assistant-custom-components-DPC-Alert) and select the corresponding entity in the dedicated field.\n\n**Additional push notifications**\nThe native persistent notification is always sent. You can add one or more `notify.*` targets to also receive a push on your phone.\n\nAll settings can be changed later from Options.",
         "data": {
           "name": "Custom name",
           "enabled_sensors": "Sensors to create",
           "alert_notifications": "Weather alert notifications",
           "dpc_alert_entity_id": "Civil Protection alert entity (optional)",
           "notify_targets": "Additional push notifications (optional)"
-        },
-        "data_description": {
-          "dpc_alert_entity_id": "Optionally, select a `sensor.dpc_alert` entity from caiosweet's [DPC Alert](https://github.com/caiosweet/Home-Assistant-custom-components-DPC-Alert) integration, if installed, to add official Civil Protection bulletins as an alert source. Leave blank if you don't have that integration."
         }
       },
       "reconfigure_region": {
@@ -72,16 +69,13 @@
     "step": {
       "init": {
         "title": "iLMeteo.it — Name and sensors",
-        "description": "Change the custom display name, which dedicated sensors are enabled, whether weather alert notifications are enabled, which Civil Protection sensor entity (caiosweet's 'DPC Alert' integration, if installed) to use as an additional source, and which notify.* targets to also push to (besides the native persistent notification, always sent). Deselecting an already-enabled sensor deletes it, losing its history.",
+        "description": "**Dedicated sensors**\nDeselecting an already-enabled sensor deletes it, losing its history.\n\n**Weather alert notifications**\nTo include official Civil Protection bulletins as an additional source, install the [DPC Alert integration by caiosweet](https://github.com/caiosweet/Home-Assistant-custom-components-DPC-Alert) and select the corresponding entity in the dedicated field.\n\n**Additional push notifications**\nThe native persistent notification is always sent. You can add one or more `notify.*` targets to also receive a push on your phone.",
         "data": {
           "name": "Custom name",
           "enabled_sensors": "Sensors to create",
           "alert_notifications": "Weather alert notifications",
           "dpc_alert_entity_id": "Civil Protection alert entity (optional)",
           "notify_targets": "Additional push notifications (optional)"
-        },
-        "data_description": {
-          "dpc_alert_entity_id": "Optionally, select a `sensor.dpc_alert` entity from caiosweet's [DPC Alert](https://github.com/caiosweet/Home-Assistant-custom-components-DPC-Alert) integration, if installed, to add official Civil Protection bulletins as an alert source. Leave blank if you don't have that integration."
         }
       }
     }

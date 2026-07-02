@@ -74,8 +74,9 @@ def _sensor_selector() -> selector.SelectSelector:
 
 
 def _dpc_entity_selector() -> selector.EntitySelector:
-    """Picker for the sensor.dpc_alert entity from the optional DPC Alert
-    custom component (github.com/caiosweet/Home-Assistant-custom-components-DPC-Alert)."""
+    """Picker for the sensor.dpc_alert entity from the DPC Alert custom component
+    (github.com/caiosweet/Home-Assistant-custom-components-DPC-Alert).
+    Leave blank if not installed."""
     return selector.EntitySelector(
         selector.EntitySelectorConfig(domain="sensor")
     )
@@ -89,6 +90,23 @@ def _notify_targets_selector() -> selector.EntitySelector:
     return selector.EntitySelector(
         selector.EntitySelectorConfig(domain="notify", multiple=True)
     )
+
+
+def _clean_options(user_input: dict[str, Any]) -> dict[str, Any]:
+    """Sanitize options before saving to config entry.
+
+    EntitySelector with no selection returns None, which then fails HA's
+    entity-ID validation on the next form load. Normalize to a safe default.
+    """
+    return {
+        OPT_ENABLED_SENSORS: user_input.get(OPT_ENABLED_SENSORS) or [],
+        OPT_ALERT_NOTIFICATIONS: user_input.get(
+            OPT_ALERT_NOTIFICATIONS, DEFAULT_ALERT_NOTIFICATIONS
+        ),
+        # None → omit the key so __init__.py's .get(key) or None works cleanly
+        OPT_DPC_ALERT_ENTITY: user_input.get(OPT_DPC_ALERT_ENTITY) or None,
+        OPT_NOTIFY_TARGETS: user_input.get(OPT_NOTIFY_TARGETS) or [],
+    }
 
 
 _SITE_COUNTER_STORAGE_VERSION = 1
@@ -226,14 +244,7 @@ class IlMeteoConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     CONF_PLACE_NAME: name,
                     CONF_SITE_NUMBER: site_number,
                 },
-                options={
-                    OPT_ENABLED_SENSORS: user_input.get(OPT_ENABLED_SENSORS, []),
-                    OPT_ALERT_NOTIFICATIONS: user_input.get(
-                        OPT_ALERT_NOTIFICATIONS, DEFAULT_ALERT_NOTIFICATIONS
-                    ),
-                    OPT_DPC_ALERT_ENTITY: user_input.get(OPT_DPC_ALERT_ENTITY),
-                    OPT_NOTIFY_TARGETS: user_input.get(OPT_NOTIFY_TARGETS, []),
-                },
+                options=_clean_options(user_input),
             )
 
         return self.async_show_form(
@@ -245,7 +256,7 @@ class IlMeteoConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     vol.Optional(
                         OPT_ALERT_NOTIFICATIONS, default=DEFAULT_ALERT_NOTIFICATIONS
                     ): selector.BooleanSelector(),
-                    vol.Optional(OPT_DPC_ALERT_ENTITY): _dpc_entity_selector(),
+                    vol.Optional(OPT_DPC_ALERT_ENTITY, default=vol.UNDEFINED): _dpc_entity_selector(),
                     vol.Optional(
                         OPT_NOTIFY_TARGETS, default=[]
                     ): _notify_targets_selector(),
@@ -360,8 +371,6 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         if user_input is not None:
             new_name = user_input.get(CONF_NAME) or self._entry.data[CONF_PLACE_NAME]
 
-            # Name lives in entry.data/title, not entry.options — update
-            # it explicitly here rather than via the Options write path.
             if new_name != self._entry.data.get(CONF_PLACE_NAME):
                 self.hass.config_entries.async_update_entry(
                     self._entry,
@@ -369,24 +378,14 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                     data={**self._entry.data, CONF_PLACE_NAME: new_name},
                 )
 
-            return self.async_create_entry(
-                title="",
-                data={
-                    OPT_ENABLED_SENSORS: user_input.get(OPT_ENABLED_SENSORS, []),
-                    OPT_ALERT_NOTIFICATIONS: user_input.get(
-                        OPT_ALERT_NOTIFICATIONS, DEFAULT_ALERT_NOTIFICATIONS
-                    ),
-                    OPT_DPC_ALERT_ENTITY: user_input.get(OPT_DPC_ALERT_ENTITY),
-                    OPT_NOTIFY_TARGETS: user_input.get(OPT_NOTIFY_TARGETS, []),
-                },
-            )
+            return self.async_create_entry(title="", data=_clean_options(user_input))
 
         current_name = self._entry.data.get(CONF_PLACE_NAME, "")
         current_sensors = self._entry.options.get(OPT_ENABLED_SENSORS, [])
         current_alerts = self._entry.options.get(
             OPT_ALERT_NOTIFICATIONS, DEFAULT_ALERT_NOTIFICATIONS
         )
-        current_dpc_entity = self._entry.options.get(OPT_DPC_ALERT_ENTITY)
+        current_dpc_entity = self._entry.options.get(OPT_DPC_ALERT_ENTITY) or vol.UNDEFINED
         current_notify_targets = self._entry.options.get(OPT_NOTIFY_TARGETS, [])
         return self.async_show_form(
             step_id="init",

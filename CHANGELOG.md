@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.7.1] - 2026-07-02
+### Fixed
+- Config flow: `dpc_alert_entity_id` left blank caused "Entity None is neither a valid entity ID nor a valid UUID" on the next Options open. Fixed by using `vol.UNDEFINED` as the field default and sanitizing `None` values via a centralized `_clean_options()` before saving to the config entry.
+
+### Changed
+- `notify_targets` multi-select was already functional; the crash above prevented testing it in practice.
+- DPC Alert entity field now shows a description with a link to the [DPC Alert](https://github.com/caiosweet/Home-Assistant-custom-components-DPC-Alert) integration directly in the config flow.
+
 ## [0.7.0] - 2026-07-01
 ### Added
 - Weather alert notifications, on by default (toggle in the config flow at creation, and any time via Options):
@@ -112,7 +120,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 - Initial draft based on the official iLMeteo REST API (later abandoned, enterprise-only).
 
-[Unreleased]: https://github.com/naked-head/ha-ilmeteo/compare/v0.6.2...HEAD
+[Unreleased]: https://github.com/naked-head/ha-ilmeteo/compare/v0.7.1...HEAD
+[0.7.1]: https://github.com/naked-head/ha-ilmeteo/compare/v0.7.0...v0.7.1
+[0.7.0]: https://github.com/naked-head/ha-ilmeteo/compare/v0.6.2...v0.7.0
 [0.6.2]: https://github.com/naked-head/ha-ilmeteo/compare/v0.6.1...v0.6.2
 [0.6.1]: https://github.com/naked-head/ha-ilmeteo/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/naked-head/ha-ilmeteo/compare/v0.5.1...v0.6.0

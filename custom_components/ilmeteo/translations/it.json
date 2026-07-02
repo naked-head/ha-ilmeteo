@@ -31,6 +31,9 @@
           "alert_notifications": "Notifiche di allerta meteo",
           "dpc_alert_entity_id": "Entità allerta Protezione Civile (opzionale)",
           "notify_targets": "Notifiche push aggiuntive (opzionale)"
+        },
+        "data_description": {
+          "dpc_alert_entity_id": "Facoltativamente, seleziona un'entità `sensor.dpc_alert` dall'integrazione [DPC Alert](https://github.com/caiosweet/Home-Assistant-custom-components-DPC-Alert) di caiosweet, se installata, per aggiungere i bollettini ufficiali della Protezione Civile come fonte di allerta. Lascia vuoto se non hai quella integrazione."
         }
       },
       "reconfigure_region": {
@@ -76,6 +79,9 @@
           "alert_notifications": "Notifiche di allerta meteo",
           "dpc_alert_entity_id": "Entità allerta Protezione Civile (opzionale)",
           "notify_targets": "Notifiche push aggiuntive (opzionale)"
+        },
+        "data_description": {
+          "dpc_alert_entity_id": "Facoltativamente, seleziona un'entità `sensor.dpc_alert` dall'integrazione [DPC Alert](https://github.com/caiosweet/Home-Assistant-custom-components-DPC-Alert) di caiosweet, se installata, per aggiungere i bollettini ufficiali della Protezione Civile come fonte di allerta. Lascia vuoto se non hai quella integrazione."
         }
       }
     }

@@ -31,6 +31,9 @@
           "alert_notifications": "Weather alert notifications",
           "dpc_alert_entity_id": "Civil Protection alert entity (optional)",
           "notify_targets": "Additional push notifications (optional)"
+        },
+        "data_description": {
+          "dpc_alert_entity_id": "Optionally, select a `sensor.dpc_alert` entity from caiosweet's [DPC Alert](https://github.com/caiosweet/Home-Assistant-custom-components-DPC-Alert) integration, if installed, to add official Civil Protection bulletins as an alert source. Leave blank if you don't have that integration."
         }
       },
       "reconfigure_region": {
@@ -76,6 +79,9 @@
           "alert_notifications": "Weather alert notifications",
           "dpc_alert_entity_id": "Civil Protection alert entity (optional)",
           "notify_targets": "Additional push notifications (optional)"
+        },
+        "data_description": {
+          "dpc_alert_entity_id": "Optionally, select a `sensor.dpc_alert` entity from caiosweet's [DPC Alert](https://github.com/caiosweet/Home-Assistant-custom-components-DPC-Alert) integration, if installed, to add official Civil Protection bulletins as an alert source. Leave blank if you don't have that integration."
         }
       }
     }

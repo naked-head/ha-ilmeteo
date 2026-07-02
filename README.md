@@ -1,7 +1,5 @@
 <p align="center">
-  <a href="https://www.ilmeteo.it/">
-    <img src="https://raw.githubusercontent.com/naked-head/ha-ilmeteo/main/images/logo.png" alt="iLMeteo.it" width="120">
-  </a>
+  <a href="https://www.ilmeteo.it/" target="_blank"><img src="https://raw.githubusercontent.com/naked-head/ha-ilmeteo/main/images/logo.png" alt="iLMeteo.it" width="120"></a>
 </p>
 
 # iLMeteo.it — Home Assistant Custom Integration
@@ -15,27 +13,28 @@
 
 A [Home Assistant](https://www.home-assistant.io/) integration that exposes weather data from **[iLMeteo.it](https://www.ilmeteo.it/)** (a popular Italian weather service) as native `weather` entities, with **daily** and **hourly** (3-hourly) forecasts — just like the OpenWeatherMap or Met.no integrations.
 
-> **How it works:** [iLMeteo](https://www.ilmeteo.it/)'s official REST API is reserved for business customers. Instead, this integration uses three of the **free public forecast box widgets** that iLMeteo provides for embedding on third-party sites (see the [business portals page](https://www.ilmeteo.it/business/portali)): a real-time conditions box for current weather, an official daily-summary box for accurate min/max and rain probability, and a 3-hourly box for detailed hourly forecasts. All are parsed server-side. No token required.
+> **How it works:** iLMeteo's official REST API is reserved for business customers. Instead, this integration uses three of the **free public forecast box widgets** that iLMeteo provides for embedding on third-party sites (see the [business portals page](https://www.ilmeteo.it/business/portali)): a real-time conditions box for current weather, an official daily-summary box for accurate min/max and rain probability, and a 3-hourly box for detailed hourly forecasts. All are parsed server-side. No token required.
 
 ---
 
 ## ⚠️ Important notes
 
-- This integration **scrapes** public web pages. There is no contractual stability guarantee: if [iLMeteo](https://www.ilmeteo.it/) changes a box's markup, the parser may need an update. Each of the three boxes is fetched independently, so a layout change on one doesn't take the others down — and a genuine parsing failure raises a visible warning in **Settings → System → Repairs** rather than failing silently.
+- This integration **scrapes** public web pages. There is no contractual stability guarantee: if iLMeteo changes a box's markup, the parser may need an update. Each of the three boxes is fetched independently, so a layout change on one doesn't take the others down — and a genuine parsing failure raises a visible warning in **Settings → System → Repairs** rather than failing silently.
 - Out of respect for iLMeteo's [terms of use](https://www.ilmeteo.it/portale/termini_e_condizioni), the integration shows the attribution "Dati meteo forniti da iLMeteo.it (www.ilmeteo.it)" on the entity and polls at a low frequency (every 30 minutes).
-- The device page (Settings → Devices & services → device) includes a "Visit" link to the configured municipality's page on [iLMeteo.it](https://www.ilmeteo.it/).
-- Unofficial project, not affiliated with [iLMeteo Srl](https://www.ilmeteo.it/).
-- The "iLMeteo" logo and trademark are property of [iLMeteo Srl](https://www.ilmeteo.it/) and are used solely to identify the data source.
+- The device page (Settings → Devices & services → device) includes a "Visit" link to the configured municipality's page on iLMeteo.it.
+- Unofficial project, not affiliated with iLMeteo Srl.
+- The "iLMeteo" logo and trademark are property of iLMeteo Srl and are used solely to identify the data source.
 
 ---
 
 ## Features
 
 - Native `weather` entity with **genuine real-time current conditions** (not an approximated forecast slot)
-- **Daily forecast** up to 6 days using [iLMeteo](https://www.ilmeteo.it/)'s own official daily min/max and **precipitation probability** — not derived from sparse hourly samples
+- **Daily forecast** up to 6 days using iLMeteo's own official daily min/max and **precipitation probability** — not derived from sparse hourly samples
 - **Hourly forecast** (3-hourly): 5 slots per day with temperature, apparent temperature, humidity, wind, precipitation
 - Automatic day/night condition handling (e.g. `sunny` → `clear-night`)
 - **Multi-location** support: each city is a separate instance
+- **Weather alert notifications**, on by default: heuristic thresholds on the same iLMeteo data, plus an optional official Protezione Civile source
 - UI configuration — no YAML, no token
 
 ## Screenshots
@@ -69,7 +68,7 @@ A [Home Assistant](https://www.home-assistant.io/) integration that exposes weat
 
 The full list of Italian municipalities (8,218 municipalities, 110 provinces, 20 regions) is bundled with the integration, so there is no need to look up codes manually. To add more locations, repeat the procedure.
 
-> The dataset is generated from [iLMeteo](https://www.ilmeteo.it/)'s official location codes via
+> The dataset is generated from iLMeteo's official location codes via
 > `scripts/build_locations.py` and stored compressed (~67 KB) in
 > `custom_components/ilmeteo/data/locations.json.gz`.
 
@@ -92,6 +91,23 @@ Besides the main `weather` entity, you can enable dedicated `sensor` entities �
 
 These exist specifically to support Home Assistant's long-term statistics and history graphs, which weather-entity attributes cannot provide (attributes have no `state_class`). They are **off by default** — nothing changes for existing installs until you opt in. Deselecting an enabled sensor deletes it, including its history.
 
+### Weather alert notifications
+
+**On by default** (toggle in the config flow at creation, and any time via **Configure** → Options). When enabled, each location is watched for weather alerts from up to two independent sources, evaluated in parallel:
+
+- **Heuristic** (always on when alerts are enabled): threshold-based alerts — extreme heat/cold, strong wind, storms, hail, high rain probability — derived from the same real1/day1/tri1 data already scraped for the weather entity. Evaluated separately for today and tomorrow. **Not an official alert**: iLMeteo.it does not publish structured alert data in its public box widgets, only editorial articles, so these thresholds are this integration's own (tunable in `alerts.py` if you disagree with them).
+- **Protezione Civile** (optional): point the `dpc_alert_entity_id` option at a `sensor.dpc_alert` entity from the [DPC Alert](https://github.com/caiosweet/Home-Assistant-custom-components-DPC-Alert) custom component, if you have it installed and configured for this location. Official Civil Protection data; this integration makes no extra HTTP requests of its own, it only reads the entity's existing state.
+
+Both sources can be active at once — alerts from each carry a `source` attribute so you can tell them apart in automations.
+
+Every alert notification includes a link to the location's iLMeteo.it page. Delivery:
+
+- A `persistent_notification` is always created (and dismissed when the alert clears) — the Markdown-rendered link is clickable in the HA frontend.
+- Optionally, push the same alert to one or more `notify.*` targets via the `notify_targets` option (empty by default: nothing is pushed until you explicitly select targets). Since native mobile push doesn't render Markdown, the iLMeteo link is instead surfaced as a tappable notification action button ("Apri iLMeteo.it").
+- An `ilmeteo_weather_alert` event is fired on every new, changed-severity, or cleared alert (`alert_id`, `severity`, `kind`, `title`, `message`, `source`, `link`, `cleared`), for building your own automations on top.
+
+Alerts are deduplicated per `alert_id` + severity and persisted across restarts, so you're notified once when an alert first appears or worsens, not on every 30-minute refresh.
+
 ## Exposed data
 
 **Current conditions** *(real-time box)*: `temperature`, `humidity`, `wind_speed`, `wind_bearing`, `condition`
@@ -112,7 +128,15 @@ python tests/test_parser.py
 
 The tests use a real HTML fixture in `tests/fixtures/`.
 
-To regenerate the bundled location dataset from the official [iLMeteo](https://www.ilmeteo.it/) CSV files:
+Alert providers (`alerts.py`) are also free of Home Assistant dependencies — `HeuristicAlertProvider` is pure, and `DpcSensorAlertProvider` only needs `hass.states.get()`, stubbed with a minimal fake:
+
+```bash
+python tests/test_alerts.py
+```
+
+`IlMeteoAlertManager` (dedup/persistence/notification dispatch in `alert_manager.py`) is not covered here — it imports `homeassistant.core`/`homeassistant.helpers.storage` directly, so testing it would need `pytest-homeassistant-custom-component` rather than this dependency-free setup.
+
+To regenerate the bundled location dataset from the official iLMeteo CSV files:
 
 ```bash
 python scripts/build_locations.py codici_comuni.csv codici_province.csv \
@@ -133,8 +157,8 @@ MIT — see [LICENSE](https://github.com/naked-head/ha-ilmeteo/blob/main/LICENSE
 
 ## Disclaimer
 
-This is an unofficial integration and is not affiliated with, endorsed by, or supported by [iLMeteo Srl](https://www.ilmeteo.it/). Weather data is retrieved from the publicly available [iLMeteo.it](https://www.ilmeteo.it/) forecast box. Use at your own risk and in accordance with iLMeteo's [terms of use](https://www.ilmeteo.it/portale/termini_e_condizioni).
+This is an unofficial integration and is not affiliated with, endorsed by, or supported by iLMeteo Srl. Weather data is retrieved from the publicly available iLMeteo.it forecast box. Use at your own risk and in accordance with iLMeteo's [terms of use](https://www.ilmeteo.it/portale/termini_e_condizioni).
 
-## Acknowledgements
+## Acknowledgments
 
 Built with the assistance of [Claude](https://claude.ai) by Anthropic.

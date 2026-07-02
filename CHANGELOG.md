@@ -7,7 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-## [0.6.2] - 2026-06-30
+## [0.7.0] - 2026-07-01
+### Added
+- Weather alert notifications, on by default (toggle in the config flow at creation, and any time via Options):
+  - `HeuristicAlertProvider`: threshold-based alerts (extreme heat/cold, strong wind, storms, hail, high rain probability) derived from the same real1/day1/tri1 data already scraped for the weather entity — not an official alert source, since iLMeteo.it does not expose structured alert data in its public box widgets. Evaluates today and tomorrow independently.
+  - Optional `DpcSensorAlertProvider`: reads an existing `sensor.dpc_alert` entity from the [DPC Alert](https://github.com/caiosweet/Home-Assistant-custom-components-DPC-Alert) custom component, if installed and pointed to via the new `dpc_alert_entity_id` option — official Protezione Civile data, no extra HTTP requests of our own.
+  - Every alert notification includes a link to the location's iLMeteo.it page.
+  - Native `persistent_notification` always created/dismissed per alert; optional push to one or more `notify.*` targets via the new `notify_targets` option (empty by default).
+  - `ilmeteo_weather_alert` event fired on every new/changed/cleared alert, for building custom automations.
+  - Per-alert dedup persisted across restarts (`homeassistant.helpers.storage.Store`): notifies only on a new alert or a severity change, not on every 30-minute refresh.
+
+## [0.6.2] - 2026-06-24
 ### Added
 - Device page now links to the configured municipality's iLMeteo.it page (`configuration_url`), shown automatically as a "Visit" link on Settings → Devices & services → device page.
 

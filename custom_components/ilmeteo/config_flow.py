@@ -23,8 +23,12 @@ from .const import (
     CONF_CITTA,
     CONF_PLACE_NAME,
     CONF_SITE_NUMBER,
+    DEFAULT_ALERT_NOTIFICATIONS,
     DOMAIN,
+    OPT_ALERT_NOTIFICATIONS,
+    OPT_DPC_ALERT_ENTITY,
     OPT_ENABLED_SENSORS,
+    OPT_NOTIFY_TARGETS,
     SENSOR_HUMIDITY,
     SENSOR_PRECIPITATION_PROBABILITY,
     SENSOR_TEMPERATURE,
@@ -66,6 +70,24 @@ def _sensor_selector() -> selector.SelectSelector:
             multiple=True,
             mode=selector.SelectSelectorMode.LIST,
         )
+    )
+
+
+def _dpc_entity_selector() -> selector.EntitySelector:
+    """Picker for the sensor.dpc_alert entity from the optional DPC Alert
+    custom component (github.com/caiosweet/Home-Assistant-custom-components-DPC-Alert)."""
+    return selector.EntitySelector(
+        selector.EntitySelectorConfig(domain="sensor")
+    )
+
+
+def _notify_targets_selector() -> selector.EntitySelector:
+    """Multi-select picker for notify.* entities to additionally push to.
+
+    Empty by default: only the native persistent_notification is sent, since
+    we never assume which mobile_app/notify target the user wants."""
+    return selector.EntitySelector(
+        selector.EntitySelectorConfig(domain="notify", multiple=True)
     )
 
 
@@ -205,7 +227,12 @@ class IlMeteoConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     CONF_SITE_NUMBER: site_number,
                 },
                 options={
-                    OPT_ENABLED_SENSORS: user_input.get(OPT_ENABLED_SENSORS, [])
+                    OPT_ENABLED_SENSORS: user_input.get(OPT_ENABLED_SENSORS, []),
+                    OPT_ALERT_NOTIFICATIONS: user_input.get(
+                        OPT_ALERT_NOTIFICATIONS, DEFAULT_ALERT_NOTIFICATIONS
+                    ),
+                    OPT_DPC_ALERT_ENTITY: user_input.get(OPT_DPC_ALERT_ENTITY),
+                    OPT_NOTIFY_TARGETS: user_input.get(OPT_NOTIFY_TARGETS, []),
                 },
             )
 
@@ -215,6 +242,13 @@ class IlMeteoConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 {
                     vol.Optional(CONF_NAME, default=self._city_name): str,
                     vol.Optional(OPT_ENABLED_SENSORS, default=[]): _sensor_selector(),
+                    vol.Optional(
+                        OPT_ALERT_NOTIFICATIONS, default=DEFAULT_ALERT_NOTIFICATIONS
+                    ): selector.BooleanSelector(),
+                    vol.Optional(OPT_DPC_ALERT_ENTITY): _dpc_entity_selector(),
+                    vol.Optional(
+                        OPT_NOTIFY_TARGETS, default=[]
+                    ): _notify_targets_selector(),
                 }
             ),
             description_placeholders={"city": self._city_name},
@@ -337,11 +371,23 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
 
             return self.async_create_entry(
                 title="",
-                data={OPT_ENABLED_SENSORS: user_input.get(OPT_ENABLED_SENSORS, [])},
+                data={
+                    OPT_ENABLED_SENSORS: user_input.get(OPT_ENABLED_SENSORS, []),
+                    OPT_ALERT_NOTIFICATIONS: user_input.get(
+                        OPT_ALERT_NOTIFICATIONS, DEFAULT_ALERT_NOTIFICATIONS
+                    ),
+                    OPT_DPC_ALERT_ENTITY: user_input.get(OPT_DPC_ALERT_ENTITY),
+                    OPT_NOTIFY_TARGETS: user_input.get(OPT_NOTIFY_TARGETS, []),
+                },
             )
 
         current_name = self._entry.data.get(CONF_PLACE_NAME, "")
         current_sensors = self._entry.options.get(OPT_ENABLED_SENSORS, [])
+        current_alerts = self._entry.options.get(
+            OPT_ALERT_NOTIFICATIONS, DEFAULT_ALERT_NOTIFICATIONS
+        )
+        current_dpc_entity = self._entry.options.get(OPT_DPC_ALERT_ENTITY)
+        current_notify_targets = self._entry.options.get(OPT_NOTIFY_TARGETS, [])
         return self.async_show_form(
             step_id="init",
             data_schema=vol.Schema(
@@ -350,6 +396,15 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                     vol.Optional(
                         OPT_ENABLED_SENSORS, default=current_sensors
                     ): _sensor_selector(),
+                    vol.Optional(
+                        OPT_ALERT_NOTIFICATIONS, default=current_alerts
+                    ): selector.BooleanSelector(),
+                    vol.Optional(
+                        OPT_DPC_ALERT_ENTITY, default=current_dpc_entity
+                    ): _dpc_entity_selector(),
+                    vol.Optional(
+                        OPT_NOTIFY_TARGETS, default=current_notify_targets
+                    ): _notify_targets_selector(),
                 }
             ),
         )

@@ -7,6 +7,14 @@ DEFAULT_SCAN_INTERVAL = 1800  # seconds (30 minutes)
 DEFAULT_NUM_DAYS = 6
 DEFAULT_INFO_URL = "https://www.ilmeteo.it/"
 
+# Bundled at custom_components/ilmeteo/brand/logo.png (256x256). Served from
+# main since it's a static asset that essentially never changes — unlike the
+# HACS README case, there's no "latest release tag" concern here.
+ILMETEO_LOGO_URL = (
+    "https://raw.githubusercontent.com/naked-head/ha-ilmeteo/main/"
+    "custom_components/ilmeteo/brand/logo.png"
+)
+
 # Config entry data keys
 CONF_CITTA = "citta"
 CONF_PLACE_NAME = "place_name"
@@ -14,6 +22,14 @@ CONF_SITE_NUMBER = "site_number"
 
 # Config entry options keys
 OPT_ENABLED_SENSORS = "enabled_sensors"
+OPT_ALERT_NOTIFICATIONS = "alert_notifications"
+OPT_DPC_ALERT_ENTITY = "dpc_alert_entity_id"
+OPT_NOTIFY_TARGETS = "notify_targets"
+
+DEFAULT_ALERT_NOTIFICATIONS = True
+
+# Fired on both new/worsened and cleared alerts; see alert_manager.py
+EVENT_WEATHER_ALERT = f"{DOMAIN}_weather_alert"
 
 # Optional sensor identifiers ("current" = real1, "today" = day1 row 0)
 SENSOR_TEMPERATURE = "temperature"

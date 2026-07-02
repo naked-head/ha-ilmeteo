@@ -24,10 +24,13 @@
       },
       "details": {
         "title": "iLMeteo.it — Dettagli istanza",
-        "description": "Località selezionata: {city}. Scegli un nome personalizzato (facoltativo, di default il nome del comune) e quali sensori dedicati creare oltre all'entità meteo principale. Entrambi sono modificabili in seguito dalle Opzioni dell'integrazione.",
+        "description": "Località selezionata: {city}. Scegli un nome personalizzato (facoltativo), quali sensori dedicati creare, se abilitare le notifiche di allerta meteo, facoltativamente un'entità sensore della Protezione Civile (integrazione 'DPC Alert' di caiosweet, se installata) come fonte ufficiale aggiuntiva, e facoltativamente uno o più target notify.* a cui inoltrare anche un push oltre alla notifica persistente nativa. Tutto è modificabile in seguito dalle Opzioni.",
         "data": {
           "name": "Nome personalizzato",
-          "enabled_sensors": "Sensori da creare"
+          "enabled_sensors": "Sensori da creare",
+          "alert_notifications": "Notifiche di allerta meteo",
+          "dpc_alert_entity_id": "Entità allerta Protezione Civile (opzionale)",
+          "notify_targets": "Notifiche push aggiuntive (opzionale)"
         }
       },
       "reconfigure_region": {
@@ -66,10 +69,13 @@
     "step": {
       "init": {
         "title": "iLMeteo.it — Nome e sensori",
-        "description": "Modifica il nome personalizzato dell'istanza e/o quali sensori dedicati sono attivi. Deselezionare un sensore già attivo lo elimina, perdendo il relativo storico.",
+        "description": "Modifica il nome personalizzato, quali sensori dedicati sono attivi, se le notifiche di allerta meteo sono abilitate, quale entità sensore della Protezione Civile ('DPC Alert' di caiosweet, se installata) usare come fonte aggiuntiva, e a quali target notify.* inoltrare anche un push (in aggiunta alla notifica persistente nativa, sempre inviata). Deselezionare un sensore già attivo lo elimina, perdendo il relativo storico.",
         "data": {
           "name": "Nome personalizzato",
-          "enabled_sensors": "Sensori da creare"
+          "enabled_sensors": "Sensori da creare",
+          "alert_notifications": "Notifiche di allerta meteo",
+          "dpc_alert_entity_id": "Entità allerta Protezione Civile (opzionale)",
+          "notify_targets": "Notifiche push aggiuntive (opzionale)"
         }
       }
     }

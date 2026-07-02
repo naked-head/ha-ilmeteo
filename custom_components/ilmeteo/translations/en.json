@@ -24,10 +24,13 @@
       },
       "details": {
         "title": "iLMeteo.it — Instance details",
-        "description": "Selected location: {city}. Choose a custom display name (optional, defaults to the municipality name) and which dedicated sensors to create besides the main weather entity. Both can be changed later from the integration's Options.",
+        "description": "Selected location: {city}. Choose a custom display name (optional), which dedicated sensors to create, whether to enable weather alert notifications, optionally a Civil Protection sensor entity (caiosweet's 'DPC Alert' integration, if installed) as an additional official source, and optionally one or more notify.* targets to also push to besides the native persistent notification. Everything can be changed later from Options.",
         "data": {
           "name": "Custom name",
-          "enabled_sensors": "Sensors to create"
+          "enabled_sensors": "Sensors to create",
+          "alert_notifications": "Weather alert notifications",
+          "dpc_alert_entity_id": "Civil Protection alert entity (optional)",
+          "notify_targets": "Additional push notifications (optional)"
         }
       },
       "reconfigure_region": {
@@ -66,10 +69,13 @@
     "step": {
       "init": {
         "title": "iLMeteo.it — Name and sensors",
-        "description": "Change the instance's custom display name and/or which dedicated sensors are enabled. Deselecting an already-enabled sensor deletes it, losing its history.",
+        "description": "Change the custom display name, which dedicated sensors are enabled, whether weather alert notifications are enabled, which Civil Protection sensor entity (caiosweet's 'DPC Alert' integration, if installed) to use as an additional source, and which notify.* targets to also push to (besides the native persistent notification, always sent). Deselecting an already-enabled sensor deletes it, losing its history.",
         "data": {
           "name": "Custom name",
-          "enabled_sensors": "Sensors to create"
+          "enabled_sensors": "Sensors to create",
+          "alert_notifications": "Weather alert notifications",
+          "dpc_alert_entity_id": "Civil Protection alert entity (optional)",
+          "notify_targets": "Additional push notifications (optional)"
         }
       }
     }

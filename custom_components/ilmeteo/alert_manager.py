@@ -118,7 +118,7 @@ class IlMeteoAlertManager:
         # so the link is a real clickable anchor there, and the logo image
         # renders inline too.
         panel_message = (
-            f"![iLMeteo.it]({ILMETEO_LOGO_URL})\n\n"
+            f"<img src='{ILMETEO_LOGO_URL}' style='max-width:90px;float:left;margin:0 12px 8px 0;border-radius:8px;'>"
             f"{alert.message}\n\n"
             f"🔗 [Dettagli e previsioni complete su iLMeteo.it]({link})"
         )
@@ -129,18 +129,24 @@ class IlMeteoAlertManager:
             blocking=False,
         )
 
-        # Native mobile push (companion app) does NOT render Markdown — a
-        # [text](url) string would show up as literal, unreadable syntax on
-        # the lock screen. Keep the push body plain, surface the required
-        # iLMeteo link as a tappable action button, and the logo via the
-        # companion app's native image attachment (data.image).
+        # Native mobile push via the legacy notify.<name> service, which is the
+        # only way to pass companion-app-specific data (image, URI actions).
+        # notify.send_message (the new 2026.5 entity API) only supports
+        # title/message and silently drops the data payload — see HA discussion
+        # #3684. The user selects entity_ids like "notify.mobile_app_phone";
+        # we split on the first dot to get domain="notify", service="mobile_app_phone".
+        # notify.mobile_app_* is the only supported target (enforced by the
+        # EntitySelector in config_flow.py). It's the legacy companion-app
+        # service and the only one that accepts the full data payload
+        # (image, URI action button). New-style notify entities (HA 2026.5+)
+        # don't support these fields yet — see HA discussion #3684.
         for target in self.notify_targets:
             try:
+                domain, service = target.split(".", 1)
                 await self.hass.services.async_call(
-                    "notify",
-                    "send_message",
+                    domain,
+                    service,
                     {
-                        "entity_id": target,
                         "title": title,
                         "message": alert.message,
                         "data": {
@@ -150,7 +156,7 @@ class IlMeteoAlertManager:
                             ],
                         },
                     },
-                    blocking=False,
+                    blocking=True,
                 )
             except Exception:  # noqa: BLE001 - one bad target must not block the rest
                 _LOGGER.exception(

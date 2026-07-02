@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.7.3] - 2026-07-02
+### Fixed
+- Push notifications: the `notify_targets` entity selector now filters exclusively on `mobile_app` integration targets. New-style notify entities (HA 2026.5+) do not support the companion-app `data` payload (image, URI action button) and caused `ServiceNotFound` or silent failures. Restricting the selector to `mobile_app_*` ensures the link always appears as a tappable action button.
+- `alert_manager.py`: removed the now-unnecessary `mobile_app_` detection branch; all targets are guaranteed to be legacy companion-app services.
+- `persistent_notification`: iLMeteo logo now rendered at max 90px wide with text alongside, instead of full-width.
+
+### Changed
+- `notify_targets` field label updated to clarify that only mobile devices with the companion app are supported.
+
 ## [0.7.2] - 2026-07-02
 ### Changed
 - Config flow: improved step descriptions with structured sections (bold headings, blank lines) and a direct link to the [DPC Alert](https://github.com/caiosweet/Home-Assistant-custom-components-DPC-Alert) integration where the Civil Protection entity field is explained.
@@ -125,7 +134,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 - Initial draft based on the official iLMeteo REST API (later abandoned, enterprise-only).
 
-[Unreleased]: https://github.com/naked-head/ha-ilmeteo/compare/v0.7.2...HEAD
+[Unreleased]: https://github.com/naked-head/ha-ilmeteo/compare/v0.7.3...HEAD
+[0.7.3]: https://github.com/naked-head/ha-ilmeteo/compare/v0.7.2...v0.7.3
+[0.7.2]: https://github.com/naked-head/ha-ilmeteo/compare/v0.7.1...v0.7.2
 [0.7.2]: https://github.com/naked-head/ha-ilmeteo/compare/v0.7.1...v0.7.2
 [0.7.1]: https://github.com/naked-head/ha-ilmeteo/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/naked-head/ha-ilmeteo/compare/v0.6.2...v0.7.0

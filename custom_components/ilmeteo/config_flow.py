@@ -83,12 +83,18 @@ def _dpc_entity_selector() -> selector.EntitySelector:
 
 
 def _notify_targets_selector() -> selector.EntitySelector:
-    """Multi-select picker for notify.* entities to additionally push to.
+    """Multi-select picker for notify.mobile_app_* entities.
 
-    Empty by default: only the native persistent_notification is sent, since
-    we never assume which mobile_app/notify target the user wants."""
+    Restricted to mobile_app_ targets since those are the only ones that
+    support the companion-app data payload (image, URI action button).
+    New-style notify entities (HA 2026.5+) do not support these fields yet.
+    """
     return selector.EntitySelector(
-        selector.EntitySelectorConfig(domain="notify", multiple=True)
+        selector.EntitySelectorConfig(
+            integration="mobile_app",
+            domain="notify",
+            multiple=True,
+        )
     )
 
 

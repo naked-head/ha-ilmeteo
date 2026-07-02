@@ -18,6 +18,7 @@ from .const import (
     DOMAIN,
     OPT_ALERT_NOTIFICATIONS,
     OPT_DPC_ALERT_ENTITY,
+    OPT_DPC_VIGILANCE_ENTITY,
     OPT_NOTIFY_TARGETS,
 )
 from .coordinator import BOX_TYPES, IlMeteoCoordinator, issue_id_for
@@ -56,6 +57,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             citta=str(entry.data[CONF_CITTA]),
             place_name=entry.data[CONF_PLACE_NAME],
             dpc_entity_id=entry.options.get(OPT_DPC_ALERT_ENTITY) or None,
+            dpc_vigilance_entity_id=entry.options.get(OPT_DPC_VIGILANCE_ENTITY) or None,
             notify_targets=entry.options.get(OPT_NOTIFY_TARGETS) or [],
         )
         await alert_manager.async_start()

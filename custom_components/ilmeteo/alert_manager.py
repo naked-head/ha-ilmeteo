@@ -10,6 +10,7 @@ from homeassistant.helpers.storage import Store
 from .alerts import (
     AlertProvider,
     DpcSensorAlertProvider,
+    DpcVigilanceProvider,
     HeuristicAlertProvider,
     WeatherAlert,
 )
@@ -39,6 +40,7 @@ class IlMeteoAlertManager:
         citta: str,
         place_name: str,
         dpc_entity_id: str | None = None,
+        dpc_vigilance_entity_id: str | None = None,
         notify_targets: list[str] | None = None,
     ) -> None:
         self.hass = hass
@@ -51,6 +53,8 @@ class IlMeteoAlertManager:
         self.providers: list[AlertProvider] = [HeuristicAlertProvider()]
         if dpc_entity_id:
             self.providers.append(DpcSensorAlertProvider(hass, dpc_entity_id))
+        if dpc_vigilance_entity_id:
+            self.providers.append(DpcVigilanceProvider(hass, dpc_vigilance_entity_id))
 
         self._store: Store[dict[str, str]] = Store(
             hass, _STORAGE_VERSION, f"{DOMAIN}_{entry_id}_alerts"

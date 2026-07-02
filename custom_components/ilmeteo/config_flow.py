@@ -27,6 +27,7 @@ from .const import (
     DOMAIN,
     OPT_ALERT_NOTIFICATIONS,
     OPT_DPC_ALERT_ENTITY,
+    OPT_DPC_VIGILANCE_ENTITY,
     OPT_ENABLED_SENSORS,
     OPT_NOTIFY_TARGETS,
     SENSOR_HUMIDITY,
@@ -119,6 +120,7 @@ def _clean_options(user_input: dict[str, Any]) -> dict[str, Any]:
         ),
         # None → omit the key so __init__.py's .get(key) or None works cleanly
         OPT_DPC_ALERT_ENTITY: user_input.get(OPT_DPC_ALERT_ENTITY) or None,
+        OPT_DPC_VIGILANCE_ENTITY: user_input.get(OPT_DPC_VIGILANCE_ENTITY) or None,
         OPT_NOTIFY_TARGETS: user_input.get(OPT_NOTIFY_TARGETS) or [],
     }
 
@@ -271,6 +273,7 @@ class IlMeteoConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         OPT_ALERT_NOTIFICATIONS, default=DEFAULT_ALERT_NOTIFICATIONS
                     ): selector.BooleanSelector(),
                     vol.Optional(OPT_DPC_ALERT_ENTITY, default=vol.UNDEFINED): _dpc_entity_selector(),
+                    vol.Optional(OPT_DPC_VIGILANCE_ENTITY, default=vol.UNDEFINED): _dpc_entity_selector(),
                     vol.Optional(
                         OPT_NOTIFY_TARGETS, default=[]
                     ): _notify_targets_selector(self.hass),
@@ -400,6 +403,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             OPT_ALERT_NOTIFICATIONS, DEFAULT_ALERT_NOTIFICATIONS
         )
         current_dpc_entity = self._entry.options.get(OPT_DPC_ALERT_ENTITY) or vol.UNDEFINED
+        current_dpc_vigilance = self._entry.options.get(OPT_DPC_VIGILANCE_ENTITY) or vol.UNDEFINED
         current_notify_targets = self._entry.options.get(OPT_NOTIFY_TARGETS, [])
         return self.async_show_form(
             step_id="init",
@@ -414,6 +418,9 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                     ): selector.BooleanSelector(),
                     vol.Optional(
                         OPT_DPC_ALERT_ENTITY, default=current_dpc_entity
+                    ): _dpc_entity_selector(),
+                    vol.Optional(
+                        OPT_DPC_VIGILANCE_ENTITY, default=current_dpc_vigilance
                     ): _dpc_entity_selector(),
                     vol.Optional(
                         OPT_NOTIFY_TARGETS, default=current_notify_targets

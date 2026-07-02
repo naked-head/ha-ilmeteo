@@ -24,13 +24,14 @@
       },
       "details": {
         "title": "iLMeteo.it — Instance details",
-        "description": "Selected location: **{city}**\n\nChoose a custom display name (optional), which dedicated sensors to create, and configure weather alert notifications.\n\n**Weather alert notifications**\nOn by default. Uses the iLMeteo data already fetched as a heuristic source. To also include official Civil Protection bulletins, install the [DPC Alert integration by caiosweet](https://github.com/caiosweet/Home-Assistant-custom-components-DPC-Alert) and select the corresponding entity in the dedicated field.\n\n**Additional push notifications**\nThe native persistent notification is always sent. You can add one or more mobile devices with the companion app installed to also receive a push on your phone.\n\nAll settings can be changed later from Options.",
+        "description": "Selected location: **{city}**\n\nChoose a custom display name (optional), which dedicated sensors to create, and configure weather alert notifications.\n\n**Weather alert notifications**\nOn by default. Uses the iLMeteo data already fetched as a heuristic source. To also include official Civil Protection bulletins, install the [DPC Alert integration by caiosweet](https://github.com/caiosweet/Home-Assistant-custom-components-DPC-Alert) and select the corresponding entities in the dedicated fields:\n**`sensor.dpc_alert`** for the hydrogeological criticality bulletin (today/tomorrow),\n**`sensor.dpc_vigilance`** for the meteorological vigilance bulletin (today/tomorrow/day-after-tomorrow).\n\n**Additional push notifications**\nThe native persistent notification is always sent. You can add one or more mobile devices with the companion app installed to also receive a push on your phone.\n\nAll settings can be changed later from Options.",
         "data": {
           "name": "Custom name",
           "enabled_sensors": "Sensors to create",
           "alert_notifications": "Weather alert notifications",
           "dpc_alert_entity_id": "Civil Protection alert entity (optional)",
-          "notify_targets": "Push notifications — mobile devices (optional)"
+          "notify_targets": "Push notifications — mobile devices (optional)",
+          "dpc_vigilance_entity_id": "Civil Protection vigilance entity (optional)"
         }
       },
       "reconfigure_region": {
@@ -69,13 +70,14 @@
     "step": {
       "init": {
         "title": "iLMeteo.it — Name and sensors",
-        "description": "**Dedicated sensors**\nDeselecting an already-enabled sensor deletes it, losing its history.\n\n**Weather alert notifications**\nTo include official Civil Protection bulletins as an additional source, install the [DPC Alert integration by caiosweet](https://github.com/caiosweet/Home-Assistant-custom-components-DPC-Alert) and select the corresponding entity in the dedicated field.\n\n**Additional push notifications**\nThe native persistent notification is always sent. You can add one or more mobile devices with the companion app installed to also receive a push on your phone.",
+        "description": "**Dedicated sensors**\nDeselecting an already-enabled sensor deletes it, losing its history.\n\n**Weather alert notifications**\nTo include official Civil Protection bulletins as an additional source, install the [DPC Alert integration by caiosweet](https://github.com/caiosweet/Home-Assistant-custom-components-DPC-Alert) and select the corresponding entities in the dedicated fields:\n**`sensor.dpc_alert`** for the hydrogeological criticality bulletin (today/tomorrow),\n**`sensor.dpc_vigilance`** for the meteorological vigilance bulletin (today/tomorrow/day-after-tomorrow).\n\n**Additional push notifications**\nThe native persistent notification is always sent. You can add one or more mobile devices with the companion app installed to also receive a push on your phone.",
         "data": {
           "name": "Custom name",
           "enabled_sensors": "Sensors to create",
           "alert_notifications": "Weather alert notifications",
           "dpc_alert_entity_id": "Civil Protection alert entity (optional)",
-          "notify_targets": "Push notifications — mobile devices (optional)"
+          "notify_targets": "Push notifications — mobile devices (optional)",
+          "dpc_vigilance_entity_id": "Civil Protection vigilance entity (optional)"
         }
       }
     }

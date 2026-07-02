@@ -261,3 +261,87 @@ class DpcSensorAlertProvider(AlertProvider):
                 ))
 
         return alerts
+
+
+# Fenomeni meteorologici di vigilanza: mappa event -> kind
+DPC_VIGILANCE_KIND = {
+    "Venti": "wind",
+    "Mare": "other",
+    "Neve": "snow",
+    "Temporali": "storm",
+    "Piogge": "rain",
+    "Temperature": "heat",
+    "Ghiaccio": "cold",
+}
+
+
+class DpcVigilanceProvider(AlertProvider):
+    """Reads the sensor.dpc_vigilance entity from the DPC Alert custom component
+    (github.com/caiosweet/Home-Assistant-custom-components-DPC-Alert).
+
+    Covers today, tomorrow and aftertomorrow. Each day produces:
+    - a level-based alert when level >= 2 (precipitation quantity from the day block)
+    - one alert per nearby phenomenon (event, value, distance, direction)
+
+    Complementary to DpcSensorAlertProvider: covers meteorological phenomena
+    (wind, snow, storms, etc.) that sensor.dpc_alert does not report.
+    """
+
+    name = "protezione_civile_vigilance"
+
+    def __init__(self, hass: Any, entity_id: str) -> None:
+        self.hass = hass
+        self.entity_id = entity_id
+
+    async def async_get_alerts(
+        self, coordinator_data: dict[str, Any], citta: str, place_name: str
+    ) -> list[WeatherAlert]:
+        state = self.hass.states.get(self.entity_id)
+        if state is None or state.state in ("unknown", "unavailable"):
+            return []
+
+        alerts: list[WeatherAlert] = []
+        for day_key, day_label in (
+            ("today", "oggi"),
+            ("tomorrow", "domani"),
+            ("aftertomorrow", "dopodomani"),
+        ):
+            day = state.attributes.get(day_key)
+            if not day:
+                continue
+
+            # Level-based alert for the day block
+            severity = DPC_LEVEL_SEVERITY.get(day.get("level"))
+            if severity is not None:
+                precip = day.get("precipitation", "")
+                alerts.append(WeatherAlert(
+                    f"dpc_vigilance_{day_key}", severity, "rain",
+                    f"Vigilanza meteo ({day_label})",
+                    f"Precipitazioni previste {day_label}: {precip}.".strip(),
+                    "protezione_civile_vigilance",
+                ))
+
+            # One alert per nearby phenomenon
+            for phenom in day.get("phenomena") or []:
+                event = phenom.get("event", "")
+                value = phenom.get("value", "")
+                distance = phenom.get("distance")
+                direction = phenom.get("direction", "")
+                alert_id = (
+                    f"dpc_vigilance_{day_key}_{event.lower().replace(' ', '_')}"
+                )
+                desc_parts = [f"{event} {value}".strip()]
+                if distance is not None and direction:
+                    desc_parts.append(f"a {distance} km in direzione {direction}")
+                severity_phenom = DPC_LEVEL_SEVERITY.get(
+                    phenom.get("level"), severity or "yellow"
+                )
+                alerts.append(WeatherAlert(
+                    alert_id, severity_phenom,
+                    DPC_VIGILANCE_KIND.get(event, "other"),
+                    f"{event} {value} ({day_label})".strip(),
+                    f"{', '.join(desc_parts)} — {day_label}.",
+                    "protezione_civile_vigilance",
+                ))
+
+        return alerts

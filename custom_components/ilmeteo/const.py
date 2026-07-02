@@ -24,6 +24,7 @@ CONF_SITE_NUMBER = "site_number"
 OPT_ENABLED_SENSORS = "enabled_sensors"
 OPT_ALERT_NOTIFICATIONS = "alert_notifications"
 OPT_DPC_ALERT_ENTITY = "dpc_alert_entity_id"
+OPT_DPC_VIGILANCE_ENTITY = "dpc_vigilance_entity_id"
 OPT_NOTIFY_TARGETS = "notify_targets"
 
 DEFAULT_ALERT_NOTIFICATIONS = True

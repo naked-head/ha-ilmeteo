@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.7.5] - 2026-07-02
+### Added
+- `DpcVigilanceProvider`: reads `sensor.dpc_vigilance` from the [DPC Alert](https://github.com/caiosweet/Home-Assistant-custom-components-DPC-Alert) integration (optional, configured via the new `dpc_vigilance_entity_id` option). Covers today, tomorrow and day-after-tomorrow. Generates alerts for the overall level (precipitation quantity) and for each nearby meteorological phenomenon (wind, snow, storms, etc.) with distance and direction. Complementary to the existing `sensor.dpc_alert` provider.
+- Italian README (`README.it.md`) with full translation and a link to the English version.
+
+### Changed
+- DPC entity selection table in both READMEs updated: `sensor.dpc_vigilance` now shows as actively supported (no longer "future release"), with field name references and a note on complementarity.
+- Config flow step descriptions updated to explain both DPC fields.
+
 ## [0.7.4] - 2026-07-02
 ### Fixed
 - Push notifications: `notify_targets` selector now restricted to `mobile_app_*` services (the only ones supporting companion-app `data` payload with image and URI action button). New-style notify entities (HA 2026.5+) are excluded as they don't support these fields yet — see [HA discussion #3684](https://github.com/orgs/home-assistant/discussions/3684).
@@ -136,7 +145,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 - Initial draft based on the official iLMeteo REST API (later abandoned, enterprise-only).
 
-[Unreleased]: https://github.com/naked-head/ha-ilmeteo/compare/v0.7.4...HEAD
+[Unreleased]: https://github.com/naked-head/ha-ilmeteo/compare/v0.7.5...HEAD
+[0.7.5]: https://github.com/naked-head/ha-ilmeteo/compare/v0.7.4...v0.7.5
 [0.7.4]: https://github.com/naked-head/ha-ilmeteo/compare/v0.7.3...v0.7.4
 [0.7.3]: https://github.com/naked-head/ha-ilmeteo/compare/v0.7.2...v0.7.3
 [0.7.2]: https://github.com/naked-head/ha-ilmeteo/compare/v0.7.1...v0.7.2

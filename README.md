@@ -2,6 +2,8 @@
   <a href="https://www.ilmeteo.it/" target="_blank"><img src="https://raw.githubusercontent.com/naked-head/ha-ilmeteo/main/images/logo.png" alt="iLMeteo.it" width="120"></a>
 </p>
 
+<p align="right"><a href="README.it.md">🇮🇹 Leggi in italiano</a></p>
+
 # iLMeteo.it — Home Assistant Custom Integration
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/integration)
@@ -96,14 +98,26 @@ These exist specifically to support Home Assistant's long-term statistics and hi
 **On by default** (toggle in the config flow at creation, and any time via **Configure** → Options). When enabled, each location is watched for weather alerts from up to two independent sources, evaluated in parallel:
 
 - **Heuristic** (always on when alerts are enabled): threshold-based alerts — extreme heat/cold, strong wind, storms, hail, high rain probability — derived from the same real1/day1/tri1 data already scraped for the weather entity. Evaluated separately for today and tomorrow. **Not an official alert**: iLMeteo.it does not publish structured alert data in its public box widgets, only editorial articles, so these thresholds are this integration's own (tunable in `alerts.py` if you disagree with them).
-- **Protezione Civile** (optional): point the `dpc_alert_entity_id` option at a `sensor.dpc_alert` entity from the [DPC Alert](https://github.com/caiosweet/Home-Assistant-custom-components-DPC-Alert) custom component, if you have it installed and configured for this location. Official Civil Protection data; this integration makes no extra HTTP requests of its own, it only reads the entity's existing state.
+- **Protezione Civile** (optional): reads live alert data from the [DPC Alert](https://github.com/caiosweet/Home-Assistant-custom-components-DPC-Alert) custom component by caiosweet, if you have it installed and configured for this location. No extra HTTP requests — this integration only reads the entity state that DPC Alert already keeps up to date.
+
+**Which DPC entity to use:** DPC Alert exposes several entities. Use **`sensor.dpc_alert`** — it contains the official Civil Protection *hydrogeological and hydraulic criticality bulletin*, with structured attributes (`events_today` / `events_tomorrow`) covering all three risk types (Temporali, Idraulico, Idrogeologico) with severity level (1–4) and descriptive text. The other entities are:
+
+| Entity | What it is | Use here? |
+|---|---|---|
+| `sensor.dpc_alert` | Criticality bulletin — all risks, today + tomorrow, full attributes | ✅ `dpc_alert_entity_id` |
+| `sensor.dpc_vigilance` | Vigilance bulletin — meteorological phenomena (wind, snow, storms…), today + tomorrow + day-after | ✅ `dpc_vigilance_entity_id` |
+| `binary_sensor.dpc_idraulico_oggi/domani` | Simplified on/off view of `sensor.dpc_alert` data | ❌ Less detail |
+| `binary_sensor.dpc_idrogeologico_oggi/domani` | Simplified on/off view of `sensor.dpc_alert` data | ❌ Less detail |
+| `binary_sensor.dpc_temporali_oggi/domani` | Simplified on/off view of `sensor.dpc_alert` data | ❌ Less detail |
+
+The two sensors are **complementary**: `sensor.dpc_alert` covers hydrogeological and hydraulic risks per risk type with severity level; `sensor.dpc_vigilance` covers meteorological phenomena (wind, snow, storms) with distance and direction from your location. Both can be active simultaneously.
 
 Both sources can be active at once — alerts from each carry a `source` attribute so you can tell them apart in automations.
 
 Every alert notification includes a link to the location's iLMeteo.it page. Delivery:
 
-- A `persistent_notification` is always created (and dismissed when the alert clears) — the Markdown-rendered link is clickable in the HA frontend.
-- Optionally, push the same alert to one or more `notify.*` targets via the `notify_targets` option (empty by default: nothing is pushed until you explicitly select targets). Since native mobile push doesn't render Markdown, the iLMeteo link is instead surfaced as a tappable notification action button ("Apri iLMeteo.it").
+- A `persistent_notification` is always created (and dismissed when the alert clears) — rendered with the iLMeteo logo and a clickable link in the HA frontend.
+- Optionally, push to one or more **mobile devices with the companion app** via the `notify_targets` option (empty by default). The iLMeteo link is surfaced as a tappable action button ("Apri iLMeteo.it") since native push doesn't render Markdown. Only `notify.mobile_app_*` targets are supported — new-style notify entities (HA 2026.5+) don't yet support the companion-app data payload.
 - An `ilmeteo_weather_alert` event is fired on every new, changed-severity, or cleared alert (`alert_id`, `severity`, `kind`, `title`, `message`, `source`, `link`, `cleared`), for building your own automations on top.
 
 Alerts are deduplicated per `alert_id` + severity and persisted across restarts, so you're notified once when an alert first appears or worsens, not on every 30-minute refresh.

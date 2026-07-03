@@ -98,17 +98,7 @@ Questi sensori esistono specificamente per supportare le statistiche a lungo ter
 - **Euristica** (sempre attiva quando le allerte sono abilitate): allerte basate su soglie — caldo/freddo estremo, vento forte, temporali, grandine, alta probabilità di pioggia — derivate dagli stessi dati real1/day1/tri1 già scaricati per l'entità meteo. Valutate separatamente per oggi e domani. **Non è un'allerta ufficiale**: iLMeteo.it non pubblica dati di allerta strutturati nei suoi box widget pubblici, solo articoli editoriali, quindi queste soglie sono definite dall'integrazione stessa (modificabili in `alerts.py`).
 - **Protezione Civile** (opzionale): legge i dati di allerta in tempo reale dall'integrazione [DPC Alert](https://github.com/caiosweet/Home-Assistant-custom-components-DPC-Alert) di caiosweet, se installata e configurata per questa località. Nessuna richiesta HTTP aggiuntiva — questa integrazione legge soltanto lo stato dell'entità che DPC Alert mantiene aggiornato.
 
-**Quale entità DPC usare:** DPC Alert espone diversi sensori. Usa **`sensor.dpc_alert`** — contiene il bollettino ufficiale di *criticità idrogeologica e idraulica* della Protezione Civile, con attributi strutturati (`events_today` / `events_tomorrow`) che coprono tutti e tre i tipi di rischio (Temporali, Idraulico, Idrogeologico) con livello di severità (1–4) e testo descrittivo. Le altre entità sono:
-
-| Entità | Cosa contiene | Da usare? |
-|---|---|---|
-| `sensor.dpc_alert` | Bollettino criticità — tutti i rischi, oggi + domani, attributi completi | ✅ `dpc_alert_entity_id` |
-| `sensor.dpc_vigilance` | Bollettino vigilanza — fenomeni meteorologici (vento, neve, temporali…), oggi + domani + dopodomani | ✅ `dpc_vigilance_entity_id` |
-| `binary_sensor.dpc_idraulico_oggi/domani` | Vista semplificata on/off dei dati di `sensor.dpc_alert` | ❌ Meno dettaglio |
-| `binary_sensor.dpc_idrogeologico_oggi/domani` | Vista semplificata on/off dei dati di `sensor.dpc_alert` | ❌ Meno dettaglio |
-| `binary_sensor.dpc_temporali_oggi/domani` | Vista semplificata on/off dei dati di `sensor.dpc_alert` | ❌ Meno dettaglio |
-
-I due sensori sono **complementari**: `sensor.dpc_alert` copre i rischi idrogeologici e idraulici per tipo di rischio con livello di severità; `sensor.dpc_vigilance` copre i fenomeni meteorologici (vento, neve, temporali) con distanza e direzione dalla tua posizione. Entrambi possono essere attivi contemporaneamente.
+**Quali entità DPC usare:** DPC Alert espone diversi sensori; solo due sono utili qui. Usa **`sensor.dpc_alert`** (campo `dpc_alert_entity_id`) per il bollettino ufficiale di criticità idrogeologica e idraulica (oggi e domani, tutti i tipi di rischio con livello di severità), e **`sensor.dpc_vigilance`** (campo `dpc_vigilance_entity_id`) per il bollettino di vigilanza meteorologica che copre oggi, domani e dopodomani (vento, neve, temporali e altri fenomeni con distanza e direzione dalla tua posizione). I due sensori sono complementari e possono essere entrambi attivi contemporaneamente. I sei binary sensor (`dpc_idraulico_*`, `dpc_idrogeologico_*`, `dpc_temporali_*`) sono viste semplificate on/off degli stessi dati e non servono qui.
 
 Entrambe le fonti possono essere attive contemporaneamente — le allerte di ciascuna portano un attributo `source` per distinguerle nelle automazioni.
 

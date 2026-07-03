@@ -100,17 +100,7 @@ These exist specifically to support Home Assistant's long-term statistics and hi
 - **Heuristic** (always on when alerts are enabled): threshold-based alerts — extreme heat/cold, strong wind, storms, hail, high rain probability — derived from the same real1/day1/tri1 data already scraped for the weather entity. Evaluated separately for today and tomorrow. **Not an official alert**: iLMeteo.it does not publish structured alert data in its public box widgets, only editorial articles, so these thresholds are this integration's own (tunable in `alerts.py` if you disagree with them).
 - **Protezione Civile** (optional): reads live alert data from the [DPC Alert](https://github.com/caiosweet/Home-Assistant-custom-components-DPC-Alert) custom component by caiosweet, if you have it installed and configured for this location. No extra HTTP requests — this integration only reads the entity state that DPC Alert already keeps up to date.
 
-**Which DPC entity to use:** DPC Alert exposes several entities. Use **`sensor.dpc_alert`** — it contains the official Civil Protection *hydrogeological and hydraulic criticality bulletin*, with structured attributes (`events_today` / `events_tomorrow`) covering all three risk types (Temporali, Idraulico, Idrogeologico) with severity level (1–4) and descriptive text. The other entities are:
-
-| Entity | What it is | Use here? |
-|---|---|---|
-| `sensor.dpc_alert` | Criticality bulletin — all risks, today + tomorrow, full attributes | ✅ `dpc_alert_entity_id` |
-| `sensor.dpc_vigilance` | Vigilance bulletin — meteorological phenomena (wind, snow, storms…), today + tomorrow + day-after | ✅ `dpc_vigilance_entity_id` |
-| `binary_sensor.dpc_idraulico_oggi/domani` | Simplified on/off view of `sensor.dpc_alert` data | ❌ Less detail |
-| `binary_sensor.dpc_idrogeologico_oggi/domani` | Simplified on/off view of `sensor.dpc_alert` data | ❌ Less detail |
-| `binary_sensor.dpc_temporali_oggi/domani` | Simplified on/off view of `sensor.dpc_alert` data | ❌ Less detail |
-
-The two sensors are **complementary**: `sensor.dpc_alert` covers hydrogeological and hydraulic risks per risk type with severity level; `sensor.dpc_vigilance` covers meteorological phenomena (wind, snow, storms) with distance and direction from your location. Both can be active simultaneously.
+**Which DPC entities to use:** DPC Alert exposes several entities; only two are useful here. Use **`sensor.dpc_alert`** (field `dpc_alert_entity_id`) for the official hydrogeological and hydraulic criticality bulletin (today and tomorrow, all risk types with severity level), and **`sensor.dpc_vigilance`** (field `dpc_vigilance_entity_id`) for the meteorological vigilance bulletin covering today, tomorrow and the day after (wind, snow, storms and other phenomena with distance and direction from your location). The two sensors are complementary and can both be active simultaneously. The six binary sensors (`dpc_idraulico_*`, `dpc_idrogeologico_*`, `dpc_temporali_*`) are simplified on/off views of the same data and are not needed here.
 
 Both sources can be active at once — alerts from each carry a `source` attribute so you can tell them apart in automations.
 

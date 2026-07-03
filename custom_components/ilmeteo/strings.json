@@ -24,7 +24,7 @@
       },
       "details": {
         "title": "iLMeteo.it — Dettagli istanza",
-        "description": "Località selezionata: **{city}**\n\nScegli un nome personalizzato (facoltativo), quali sensori dedicati creare e configura le notifiche di allerta meteo.\n\n**Notifiche di allerta meteo**\nAttive per impostazione predefinita. Utilizzano i dati iLMeteo già scaricati come fonte euristica. Per aggiungere i bollettini ufficiali della Protezione Civile, installa l'integrazione [DPC Alert di caiosweet]({dpc_url}) e seleziona le entità corrispondenti nei campi dedicati:\n**`sensor.dpc_alert`** per il bollettino di criticità idrogeologica (oggi/domani),\n**`sensor.dpc_vigilance`** per il bollettino di vigilanza meteorologica (oggi/domani/dopodomani).\n\n**Notifiche push aggiuntive**\nLa notifica persistente nativa è sempre inviata. Puoi aggiungere uno o più dispositivi mobili con il companion app installato per ricevere un push anche sul telefono.\n\nTutto è modificabile in seguito dalle Opzioni.",
+        "description": "Località selezionata: **{city}**\n\nScegli un nome personalizzato (facoltativo), quali sensori dedicati creare e configura le notifiche di allerta meteo.\n\n**Notifiche di allerta meteo**\nAttive per impostazione predefinita. Utilizzano i dati iLMeteo già scaricati come fonte euristica. Per aggiungere i bollettini ufficiali della Protezione Civile installa l'integrazione DPC Alert di caiosweet e seleziona sensor.dpc_alert e/o sensor.dpc_vigilance nei campi dedicati.\n\n**Notifiche push aggiuntive**\nLa notifica persistente nativa è sempre inviata. Puoi aggiungere uno o più dispositivi mobili con il companion app installato.\n\nTutto è modificabile in seguito dalle Opzioni.",
         "data": {
           "name": "Nome personalizzato",
           "enabled_sensors": "Sensori da creare",
@@ -32,9 +32,6 @@
           "dpc_alert_entity_id": "Entità allerta Protezione Civile (opzionale)",
           "notify_targets": "Notifiche push — dispositivi mobili (opzionale)",
           "dpc_vigilance_entity_id": "Entità vigilanza Protezione Civile (opzionale)"
-        },
-        "description_placeholders": {
-          "dpc_url": "https://github.com/caiosweet/Home-Assistant-custom-components-DPC-Alert"
         }
       },
       "reconfigure_region": {
@@ -73,7 +70,7 @@
     "step": {
       "init": {
         "title": "iLMeteo.it — Nome e sensori",
-        "description": "**Sensori dedicati**\nDeselezionare un sensore già attivo lo elimina, perdendo il relativo storico.\n\n**Notifiche di allerta meteo**\nPer usare i bollettini ufficiali della Protezione Civile come fonte aggiuntiva, installa l'integrazione [DPC Alert di caiosweet]({dpc_url}) e seleziona le entità corrispondenti nei campi dedicati:\n**`sensor.dpc_alert`** per il bollettino di criticità idrogeologica (oggi/domani),\n**`sensor.dpc_vigilance`** per il bollettino di vigilanza meteorologica (oggi/domani/dopodomani).\n\n**Notifiche push aggiuntive**\nLa notifica persistente nativa è sempre inviata. Puoi aggiungere uno o più dispositivi mobili con il companion app installato per ricevere un push anche sul telefono.",
+        "description": "**Sensori dedicati**\nDeselezionare un sensore già attivo lo elimina, perdendo il relativo storico.\n\n**Notifiche di allerta meteo**\nPer aggiungere i bollettini ufficiali della Protezione Civile installa l'integrazione DPC Alert di caiosweet e seleziona sensor.dpc_alert e/o sensor.dpc_vigilance nei campi dedicati.\n\n**Notifiche push aggiuntive**\nLa notifica persistente nativa è sempre inviata. Puoi aggiungere uno o più dispositivi mobili con il companion app installato.",
         "data": {
           "name": "Nome personalizzato",
           "enabled_sensors": "Sensori da creare",
@@ -81,9 +78,6 @@
           "dpc_alert_entity_id": "Entità allerta Protezione Civile (opzionale)",
           "notify_targets": "Notifiche push — dispositivi mobili (opzionale)",
           "dpc_vigilance_entity_id": "Entità vigilanza Protezione Civile (opzionale)"
-        },
-        "description_placeholders": {
-          "dpc_url": "https://github.com/caiosweet/Home-Assistant-custom-components-DPC-Alert"
         }
       }
     }

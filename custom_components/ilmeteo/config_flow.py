@@ -279,10 +279,7 @@ class IlMeteoConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     ): _notify_targets_selector(self.hass),
                 }
             ),
-            description_placeholders={
-                "city": self._city_name,
-                "dpc_url": "https://github.com/caiosweet/Home-Assistant-custom-components-DPC-Alert",
-            },
+            description_placeholders={"city": self._city_name},
         )
 
     # ------------------------------------------------------------------
@@ -430,7 +427,4 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                     ): _notify_targets_selector(self.hass),
                 }
             ),
-            description_placeholders={
-                "dpc_url": "https://github.com/caiosweet/Home-Assistant-custom-components-DPC-Alert",
-            },
         )

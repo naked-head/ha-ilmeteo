@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-07-03
+### Fixed
+- `DpcVigilanceProvider`: phenomena were evaluated regardless of the day's alert level, causing spurious alerts when the day level was below the threshold (level < 2). Phenomena are now skipped entirely when the day level does not meet the threshold.
+- `DpcVigilanceProvider`: distance and direction (zone centroid coordinates) are now included in the alert message only for spatially localised phenomena (Venti, Temporali, Neve, Mare, Ghiaccio). Temperature phenomena no longer show a misleading "a X km in direzione Y" suffix.
+
 ## [1.0.0] - 2026-07-03
 ### Added
 - First stable public release.
@@ -152,7 +157,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 - Initial draft based on the official iLMeteo REST API (later abandoned, enterprise-only).
 
-[Unreleased]: https://github.com/naked-head/ha-ilmeteo/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/naked-head/ha-ilmeteo/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/naked-head/ha-ilmeteo/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/naked-head/ha-ilmeteo/compare/v0.7.5...v1.0.0
 [0.7.5]: https://github.com/naked-head/ha-ilmeteo/compare/v0.7.4...v0.7.5
 [0.7.4]: https://github.com/naked-head/ha-ilmeteo/compare/v0.7.3...v0.7.4

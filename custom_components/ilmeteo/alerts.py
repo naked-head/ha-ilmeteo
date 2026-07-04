@@ -310,18 +310,28 @@ class DpcVigilanceProvider(AlertProvider):
             if not day:
                 continue
 
+            day_severity = DPC_LEVEL_SEVERITY.get(day.get("level"))
+
             # Level-based alert for the day block
-            severity = DPC_LEVEL_SEVERITY.get(day.get("level"))
-            if severity is not None:
+            if day_severity is not None:
                 precip = day.get("precipitation", "")
                 alerts.append(WeatherAlert(
-                    f"dpc_vigilance_{day_key}", severity, "rain",
+                    f"dpc_vigilance_{day_key}", day_severity, "rain",
                     f"Vigilanza meteo ({day_label})",
                     f"Precipitazioni previste {day_label}: {precip}.".strip(),
                     "protezione_civile_vigilance",
                 ))
 
-            # One alert per nearby phenomenon
+            # Phenomena alerts: only if the day level meets the threshold.
+            # Phenomena don't carry their own level — we use the day level.
+            # Distance/direction are geographic coordinates of the zone centroid
+            # and are meaningful only for spatially localised phenomena (wind,
+            # storms, snow) — not for temperature which affects the whole zone.
+            if day_severity is None:
+                continue
+
+            PHENOMENA_WITH_LOCATION = {"Venti", "Temporali", "Neve", "Mare", "Ghiaccio"}
+
             for phenom in day.get("phenomena") or []:
                 event = phenom.get("event", "")
                 value = phenom.get("value", "")
@@ -331,13 +341,10 @@ class DpcVigilanceProvider(AlertProvider):
                     f"dpc_vigilance_{day_key}_{event.lower().replace(' ', '_')}"
                 )
                 desc_parts = [f"{event} {value}".strip()]
-                if distance is not None and direction:
+                if event in PHENOMENA_WITH_LOCATION and distance is not None and direction:
                     desc_parts.append(f"a {distance} km in direzione {direction}")
-                severity_phenom = DPC_LEVEL_SEVERITY.get(
-                    phenom.get("level"), severity or "yellow"
-                )
                 alerts.append(WeatherAlert(
-                    alert_id, severity_phenom,
+                    alert_id, day_severity,
                     DPC_VIGILANCE_KIND.get(event, "other"),
                     f"{event} {value} ({day_label})".strip(),
                     f"{', '.join(desc_parts)} — {day_label}.",

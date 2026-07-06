@@ -155,7 +155,7 @@ Vedi [CHANGELOG.md](CHANGELOG.md) per la cronologia completa delle versioni.
 
 ## Licenza
 
-MIT — vedi [LICENSE](https://github.com/naked-head/ha-ilmeteo/blob/main/LICENSE)
+GPL-3.0-or-later — see [LICENSE](https://github.com/naked-head/ha-ilmeteo/blob/main/LICENSE)
 
 ## Disclaimer
 

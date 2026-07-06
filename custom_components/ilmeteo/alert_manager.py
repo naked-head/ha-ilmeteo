@@ -1,4 +1,4 @@
-"""Alert evaluation, dedup/persistence, and Home Assistant notification dispatch."""
+"""Alert evaluation, dedup/persistence, and batched Home Assistant notification dispatch."""
 from __future__ import annotations
 
 import logging
@@ -21,15 +21,18 @@ _LOGGER = logging.getLogger(__name__)
 
 _STORAGE_VERSION = 1
 
+_DAY_LABELS = {"today": "oggi", "tomorrow": "domani", "aftertomorrow": "dopodomani"}
+_DAY_ORDER = ("today", "tomorrow", "aftertomorrow")
+
 
 class IlMeteoAlertManager:
     """Watches a coordinator's data, detects alerts, notifies on change.
 
-    Dedup is signature-based (alert_id + severity): a persistent_notification
-    and an EVENT_WEATHER_ALERT event are only emitted when an alert is new or
-    its severity changed, not on every coordinator refresh. Active alert IDs
-    are persisted across restarts so a HA reboot doesn't re-fire notifications
-    for alerts that were already notified.
+    Dedup is signature-based (alert_id + severity) and persisted across
+    restarts. Notifications are BATCHED PER DAY: all active alerts for the
+    same day are rendered into a single persistent_notification (and a single
+    mobile push), re-created whenever the set of alerts for that day changes,
+    and dismissed when no alerts remain for that day.
     """
 
     def __init__(
@@ -94,15 +97,57 @@ class IlMeteoAlertManager:
         current = {alert.alert_id: alert for alert in alerts}
         link = self._link_for(data)
 
+        # Determine which days changed (new alert, severity change, or cleared)
+        changed_days: set[str] = set()
+
         for alert_id, alert in current.items():
             if self._active.get(alert_id) != alert.signature:
-                await self._notify(alert, link)
+                changed_days.add(alert.day)
                 self._active[alert_id] = alert.signature
+                self.hass.bus.async_fire(
+                    EVENT_WEATHER_ALERT,
+                    {
+                        "entry_id": self.entry_id,
+                        "place_name": self.place_name,
+                        "alert_id": alert.alert_id,
+                        "severity": alert.severity,
+                        "kind": alert.kind,
+                        "title": alert.title,
+                        "message": alert.message,
+                        "source": alert.source,
+                        "day": alert.day,
+                        "link": link,
+                        "cleared": False,
+                    },
+                )
 
         for alert_id in list(self._active):
             if alert_id not in current:
-                await self._dismiss(alert_id)
+                # We no longer know the day of a cleared alert from the store —
+                # refresh all day notifications to be safe.
+                changed_days.update(_DAY_ORDER)
                 del self._active[alert_id]
+                self.hass.bus.async_fire(
+                    EVENT_WEATHER_ALERT,
+                    {
+                        "entry_id": self.entry_id,
+                        "place_name": self.place_name,
+                        "alert_id": alert_id,
+                        "cleared": True,
+                    },
+                )
+
+        # Re-render one batched notification per changed day
+        alerts_by_day: dict[str, list[WeatherAlert]] = {}
+        for alert in current.values():
+            alerts_by_day.setdefault(alert.day, []).append(alert)
+
+        for day in changed_days:
+            day_alerts = alerts_by_day.get(day, [])
+            if day_alerts:
+                await self._notify_day(day, day_alerts, link)
+            else:
+                await self._dismiss_day(day)
 
         await self._store.async_save(self._active)
 
@@ -114,54 +159,56 @@ class IlMeteoAlertManager:
             return days[0]["url"]
         return DEFAULT_INFO_URL
 
-    async def _notify(self, alert: WeatherAlert, link: str) -> None:
-        notification_id = f"{DOMAIN}_{self.entry_id}_{alert.alert_id}"
-        title = f"⚠️ {self.place_name}: {alert.title}"
+    def _notification_id(self, day: str) -> str:
+        return f"{DOMAIN}_{self.entry_id}_{day}"
 
-        # persistent_notification renders HTML/Markdown in the HA frontend.
-        # Table layout keeps the logo small (72px) with text alongside.
+    async def _notify_day(
+        self, day: str, day_alerts: list[WeatherAlert], link: str
+    ) -> None:
+        """Create/refresh the single batched notification for a day."""
+        day_label = _DAY_LABELS.get(day, day)
+        count = len(day_alerts)
+
+        if count == 1:
+            title = f"⚠️ {self.place_name}: {day_alerts[0].title}"
+        else:
+            title = f"⚠️ {self.place_name}: {count} allerte meteo ({day_label})"
+
+        # Panel: table layout with logo, one bullet per alert, single link
+        items_html = "<br>".join(f"• {a.message}" for a in day_alerts)
         panel_message = (
             f"<table><tr>"
             f"<td><img src='{ILMETEO_LOGO_URL}' width='72'></td>"
             f"<td>&nbsp;&nbsp;</td>"
-            f"<td><b>{alert.title}</b><br>{alert.message}<br><br>"
+            f"<td>{items_html}<br><br>"
             f"🔗 <a href='{link}'>Dettagli e previsioni complete su iLMeteo.it</a></td>"
             f"</tr></table>"
         )
         await self.hass.services.async_call(
             "persistent_notification",
             "create",
-            {"notification_id": notification_id, "title": title, "message": panel_message},
+            {
+                "notification_id": self._notification_id(day),
+                "title": title,
+                "message": panel_message,
+            },
             blocking=False,
         )
 
-        # Fire the event unconditionally — automations can listen regardless
-        # of whether push targets are configured.
-        self.hass.bus.async_fire(
-            EVENT_WEATHER_ALERT,
-            {
-                "entry_id": self.entry_id,
-                "place_name": self.place_name,
-                "alert_id": alert.alert_id,
-                "severity": alert.severity,
-                "kind": alert.kind,
-                "title": alert.title,
-                "message": alert.message,
-                "source": alert.source,
-                "link": link,
-                "cleared": False,
-            },
-        )
-
-        # Native mobile push via the legacy notify.mobile_app_* service — the
-        # only channel that supports companion-app data (image, URI action button).
-        # New-style notify entities (HA 2026.5+) don't support these fields yet
-        # — see HA discussion #3684. The selector in config_flow.py restricts
-        # targets to mobile_app_* only.
+        # Mobile push: plain-text bullet list, iLMeteo link as URI action button
+        push_message = "\n".join(f"• {a.message}" for a in day_alerts)
         for target in self.notify_targets:
             self.hass.async_create_task(
-                self._push_with_retry(target, title, alert.message, link)
+                self._push_with_retry(target, title, push_message, link)
             )
+
+    async def _dismiss_day(self, day: str) -> None:
+        await self.hass.services.async_call(
+            "persistent_notification",
+            "dismiss",
+            {"notification_id": self._notification_id(day)},
+            blocking=False,
+        )
 
     async def _push_with_retry(
         self, target: str, title: str, message: str, link: str, attempt: int = 0
@@ -207,21 +254,3 @@ class IlMeteoAlertManager:
             )
         except Exception:  # noqa: BLE001
             _LOGGER.exception("Push to %s failed", target)
-
-    async def _dismiss(self, alert_id: str) -> None:
-        notification_id = f"{DOMAIN}_{self.entry_id}_{alert_id}"
-        await self.hass.services.async_call(
-            "persistent_notification",
-            "dismiss",
-            {"notification_id": notification_id},
-            blocking=False,
-        )
-        self.hass.bus.async_fire(
-            EVENT_WEATHER_ALERT,
-            {
-                "entry_id": self.entry_id,
-                "place_name": self.place_name,
-                "alert_id": alert_id,
-                "cleared": True,
-            },
-        )

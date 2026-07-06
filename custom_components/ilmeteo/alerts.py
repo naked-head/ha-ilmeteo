@@ -36,6 +36,7 @@ class WeatherAlert:
     title: str
     message: str
     source: str  # provider name, e.g. "heuristic"
+    day: str = "today"  # "today" | "tomorrow" | "aftertomorrow" — grouping key for batched notifications
 
     @property
     def signature(self) -> str:
@@ -113,23 +114,23 @@ class HeuristicAlertProvider(AlertProvider):
         if tmax is not None and tmax >= HEAT_ORANGE_C:
             alerts.append(WeatherAlert(
                 f"heuristic_heat_{suffix}", "orange", "heat", f"Caldo estremo ({label})",
-                f"Temperatura massima prevista {label}: {tmax:.0f}°C.", "heuristic",
+                f"Temperatura massima prevista {label}: {tmax:.0f}°C.", "heuristic", day=suffix,
             ))
         elif tmax is not None and tmax >= HEAT_YELLOW_C:
             alerts.append(WeatherAlert(
                 f"heuristic_heat_{suffix}", "yellow", "heat", f"Caldo intenso ({label})",
-                f"Temperatura massima prevista {label}: {tmax:.0f}°C.", "heuristic",
+                f"Temperatura massima prevista {label}: {tmax:.0f}°C.", "heuristic", day=suffix,
             ))
 
         if tmin is not None and tmin <= COLD_ORANGE_C:
             alerts.append(WeatherAlert(
                 f"heuristic_cold_{suffix}", "orange", "cold", f"Gelo intenso ({label})",
-                f"Temperatura minima prevista {label}: {tmin:.0f}°C.", "heuristic",
+                f"Temperatura minima prevista {label}: {tmin:.0f}°C.", "heuristic", day=suffix,
             ))
         elif tmin is not None and tmin <= COLD_YELLOW_C:
             alerts.append(WeatherAlert(
                 f"heuristic_cold_{suffix}", "yellow", "cold", f"Gelo ({label})",
-                f"Temperatura minima prevista {label}: {tmin:.0f}°C.", "heuristic",
+                f"Temperatura minima prevista {label}: {tmin:.0f}°C.", "heuristic", day=suffix,
             ))
 
         return alerts
@@ -147,12 +148,12 @@ class HeuristicAlertProvider(AlertProvider):
         if speed >= WIND_ORANGE_KMH:
             return [WeatherAlert(
                 f"heuristic_wind_{suffix}", "orange", "wind", f"Vento forte ({label})",
-                f"Velocità del vento prevista {label}: {speed:.0f} km/h.", "heuristic",
+                f"Velocità del vento prevista {label}: {speed:.0f} km/h.", "heuristic", day=suffix,
             )]
         if speed >= WIND_YELLOW_KMH:
             return [WeatherAlert(
                 f"heuristic_wind_{suffix}", "yellow", "wind", f"Vento sostenuto ({label})",
-                f"Velocità del vento prevista {label}: {speed:.0f} km/h.", "heuristic",
+                f"Velocità del vento prevista {label}: {speed:.0f} km/h.", "heuristic", day=suffix,
             )]
         return []
 
@@ -168,17 +169,17 @@ class HeuristicAlertProvider(AlertProvider):
         if "grandine" in joined:
             alerts.append(WeatherAlert(
                 f"heuristic_hail_{suffix}", "orange", "hail", f"Rischio grandine ({label})",
-                f"Condizioni compatibili con grandinate {label}.", "heuristic",
+                f"Condizioni compatibili con grandinate {label}.", "heuristic", day=suffix,
             ))
         if "temporale forte" in joined or "temporali forti" in joined:
             alerts.append(WeatherAlert(
                 f"heuristic_storm_{suffix}", "orange", "storm", f"Temporali forti ({label})",
-                f"Previsti temporali forti {label}.", "heuristic",
+                f"Previsti temporali forti {label}.", "heuristic", day=suffix,
             ))
         elif "temporal" in joined:
             alerts.append(WeatherAlert(
                 f"heuristic_storm_{suffix}", "yellow", "storm", f"Temporali ({label})",
-                f"Previsti temporali {label}.", "heuristic",
+                f"Previsti temporali {label}.", "heuristic", day=suffix,
             ))
         return alerts
 
@@ -188,7 +189,7 @@ class HeuristicAlertProvider(AlertProvider):
         if prob is not None and prob >= RAIN_PROB_YELLOW:
             return [WeatherAlert(
                 f"heuristic_rain_{suffix}", "yellow", "rain", f"Piogge probabili ({label})",
-                f"Probabilità di precipitazioni {label}: {prob:.0f}%.", "heuristic",
+                f"Probabilità di precipitazioni {label}: {prob:.0f}%.", "heuristic", day=suffix,
             )]
         return []
 
@@ -242,6 +243,7 @@ class DpcSensorAlertProvider(AlertProvider):
                     f"{event.get('alert', 'Allerta')} — {risk} ({day_label})",
                     f"{event.get('info', '')} — rischio {risk}, {day_label}.".strip(),
                     "protezione_civile",
+                    day="today" if day_key == "events_today" else "tomorrow",
                 ))
 
         # Older versions of the component may not expose events_today/
@@ -258,6 +260,7 @@ class DpcSensorAlertProvider(AlertProvider):
                     f"dpc_{day_key}", severity, "other",
                     f"{day.get('alert', 'Allerta')} ({day_label})",
                     f"{day.get('info', '')} ({day_label}).", "protezione_civile",
+                    day=day_key,
                 ))
 
         return alerts
@@ -320,6 +323,7 @@ class DpcVigilanceProvider(AlertProvider):
                     f"Vigilanza meteo ({day_label})",
                     f"Precipitazioni previste {day_label}: {precip}.".strip(),
                     "protezione_civile_vigilance",
+                    day=day_key,
                 ))
 
             # Phenomena alerts: only if the day level meets the threshold.
@@ -349,6 +353,7 @@ class DpcVigilanceProvider(AlertProvider):
                     f"{event} {value} ({day_label})".strip(),
                     f"{', '.join(desc_parts)} — {day_label}.",
                     "protezione_civile_vigilance",
+                    day=day_key,
                 ))
 
         return alerts

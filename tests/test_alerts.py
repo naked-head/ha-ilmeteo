@@ -176,6 +176,32 @@ def test_dpc_falls_back_to_aggregate_today_tomorrow():
     assert _ids(alerts) == {"dpc_today"}
 
 
+def test_alerts_carry_day_field():
+    data = _coordinator_data(daily=[{"temp_max": 39}, {"temp_max": 39}])
+    alerts = _run(HeuristicAlertProvider().async_get_alerts(data, "1", "Roma"))
+    days = {a.alert_id: a.day for a in alerts}
+    assert days["heuristic_heat_today"] == "today"
+    assert days["heuristic_heat_tomorrow"] == "tomorrow"
+
+
+def test_dpc_vigilance_day_field():
+    state = _FakeState("2", {
+        "aftertomorrow": {
+            "level": 2,
+            "precipitation": "Diffuse",
+            "phenomena": [
+                {"event": "Venti", "value": "burrasca", "distance": 10, "direction": "NW"},
+            ],
+        },
+    })
+    hass = _FakeHass(state)
+    from alerts import DpcVigilanceProvider
+    provider = DpcVigilanceProvider(hass, "sensor.dpc_vigilance")
+    alerts = _run(provider.async_get_alerts(_coordinator_data(), "1", "Roma"))
+    assert all(a.day == "aftertomorrow" for a in alerts)
+    assert len(alerts) == 2  # day-level + 1 phenomenon
+
+
 if __name__ == "__main__":
     import traceback
 

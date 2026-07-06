@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-07-06
+### Changed
+- **Batched notifications per day**: all active alerts for the same day (today / tomorrow / day-after-tomorrow) are now grouped into a single `persistent_notification` and a single mobile push, instead of one notification per alert. The notification is re-rendered when the set of alerts for that day changes (new alert, severity change, or cleared alert) and dismissed when no alerts remain. This eliminates the "3 simultaneous notifications" noise from vigilance bulletins carrying multiple phenomena.
+- `WeatherAlert` now carries a `day` field (`today` / `tomorrow` / `aftertomorrow`), populated by all providers and included in the `ilmeteo_weather_alert` event payload.
+- The `ilmeteo_weather_alert` event is still fired once per individual alert (unchanged granularity for automations); only the visual rendering is batched.
+
 ## [1.0.1] - 2026-07-03
 ### Fixed
 - `DpcVigilanceProvider`: phenomena were evaluated regardless of the day's alert level, causing spurious alerts when the day level was below the threshold (level < 2). Phenomena are now skipped entirely when the day level does not meet the threshold.
@@ -157,7 +163,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 - Initial draft based on the official iLMeteo REST API (later abandoned, enterprise-only).
 
-[Unreleased]: https://github.com/naked-head/ha-ilmeteo/compare/v1.0.1...HEAD
+[Unreleased]: https://github.com/naked-head/ha-ilmeteo/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/naked-head/ha-ilmeteo/compare/v1.0.1...v1.1.0
 [1.0.1]: https://github.com/naked-head/ha-ilmeteo/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/naked-head/ha-ilmeteo/compare/v0.7.5...v1.0.0
 [0.7.5]: https://github.com/naked-head/ha-ilmeteo/compare/v0.7.4...v0.7.5

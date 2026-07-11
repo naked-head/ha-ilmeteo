@@ -202,6 +202,31 @@ def test_dpc_vigilance_day_field():
     assert len(alerts) == 2  # day-level + 1 phenomenon
 
 
+def test_hysteresis_keeps_heat_alert_alive():
+    # Value at 34°C (below HEAT_YELLOW_C=35) but alert was active -> kept alive
+    data = _coordinator_data(daily=[{"temp_max": 34}])
+    active = frozenset(["heuristic_heat_today"])
+    alerts = _run(HeuristicAlertProvider().async_get_alerts(data, "1", "Roma", active_alert_ids=active))
+    assert any(a.alert_id == "heuristic_heat_today" for a in alerts)
+
+
+def test_hysteresis_clears_alert_below_delta():
+    # Value at 32°C (below HEAT_YELLOW_C - HEAT_HYSTERESIS_C = 33) -> cleared
+    data = _coordinator_data(daily=[{"temp_max": 32}])
+    active = frozenset(["heuristic_heat_today"])
+    alerts = _run(HeuristicAlertProvider().async_get_alerts(data, "1", "Roma", active_alert_ids=active))
+    assert not any(a.alert_id == "heuristic_heat_today" for a in alerts)
+
+
+def test_no_hysteresis_without_active_alert():
+    # Value at 34°C with no active alert -> no alert generated
+    data = _coordinator_data(daily=[{"temp_max": 34}])
+    alerts = _run(HeuristicAlertProvider().async_get_alerts(data, "1", "Roma"))
+    assert not any(a.alert_id == "heuristic_heat_today" for a in alerts)
+
+
+
+
 if __name__ == "__main__":
     import traceback
 

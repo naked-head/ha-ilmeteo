@@ -25,6 +25,14 @@ WIND_YELLOW_KMH = 40
 WIND_ORANGE_KMH = 60
 RAIN_PROB_YELLOW = 80
 
+# Hysteresis deltas: an active alert is kept alive until the value drops
+# this much below the threshold that triggered it. Prevents rapid on/off
+# oscillation when values hover near a boundary between refreshes.
+HEAT_HYSTERESIS_C = 2
+COLD_HYSTERESIS_C = 2
+WIND_HYSTERESIS_KMH = 5
+RAIN_PROB_HYSTERESIS = 5
+
 
 @dataclass
 class WeatherAlert:
@@ -51,9 +59,18 @@ class AlertProvider(ABC):
 
     @abstractmethod
     async def async_get_alerts(
-        self, coordinator_data: dict[str, Any], citta: str, place_name: str
+        self,
+        coordinator_data: dict[str, Any],
+        citta: str,
+        place_name: str,
+        active_alert_ids: frozenset[str] | None = None,
     ) -> list[WeatherAlert]:
-        """Return the currently active alerts for this location."""
+        """Return the currently active alerts for this location.
+
+        active_alert_ids: the set of alert_ids currently in the dedup store.
+        Providers that implement hysteresis use this to keep an alert alive
+        even when the value has dipped just below the trigger threshold.
+        """
 
 
 class HeuristicAlertProvider(AlertProvider):
@@ -64,21 +81,30 @@ class HeuristicAlertProvider(AlertProvider):
     heuristic_heat_tomorrow), so they dedup and notify separately. real1
     ("current conditions") only applies to today.
 
+    Hysteresis: once an alert is active, it is kept alive until the value
+    drops below (threshold - delta), preventing rapid on/off oscillation
+    when values hover near a boundary between 30-minute refreshes.
+
     Not an official alert source — see module docstring.
     """
 
     name = "heuristic"
 
     async def async_get_alerts(
-        self, coordinator_data: dict[str, Any], citta: str, place_name: str
+        self,
+        coordinator_data: dict[str, Any],
+        citta: str,
+        place_name: str,
+        active_alert_ids: frozenset[str] | None = None,
     ) -> list[WeatherAlert]:
         daily = coordinator_data.get("daily") or []
         days = coordinator_data.get("days") or []
         current = coordinator_data.get("current") or {}
+        active = active_alert_ids or frozenset()
 
         alerts: list[WeatherAlert] = []
-        alerts += self._for_day(daily, days, current, index=0, suffix="today", label="oggi")
-        alerts += self._for_day(daily, days, current, index=1, suffix="tomorrow", label="domani")
+        alerts += self._for_day(daily, days, current, index=0, suffix="today", label="oggi", active=active)
+        alerts += self._for_day(daily, days, current, index=1, suffix="tomorrow", label="domani", active=active)
         return alerts
 
     def _for_day(
@@ -89,6 +115,7 @@ class HeuristicAlertProvider(AlertProvider):
         index: int,
         suffix: str,
         label: str,
+        active: frozenset[str],
     ) -> list[WeatherAlert]:
         summary = daily[index] if len(daily) > index else {}
         hours = (
@@ -99,45 +126,59 @@ class HeuristicAlertProvider(AlertProvider):
         current_for_day = current if index == 0 else {}
 
         alerts: list[WeatherAlert] = []
-        alerts += self._heat_cold(summary, suffix, label)
-        alerts += self._wind(summary, current_for_day, suffix, label)
+        alerts += self._heat_cold(summary, suffix, label, active)
+        alerts += self._wind(summary, current_for_day, suffix, label, active)
         alerts += self._storm_hail(hours, current_for_day, suffix, label)
-        alerts += self._rain(summary, suffix, label)
+        alerts += self._rain(summary, suffix, label, active)
         return alerts
 
     @staticmethod
-    def _heat_cold(summary: dict[str, Any], suffix: str, label: str) -> list[WeatherAlert]:
+    def _heat_cold(
+        summary: dict[str, Any], suffix: str, label: str, active: frozenset[str]
+    ) -> list[WeatherAlert]:
         alerts: list[WeatherAlert] = []
         tmax = summary.get("temp_max")
         tmin = summary.get("temp_min")
+        h = HEAT_HYSTERESIS_C
+        c = COLD_HYSTERESIS_C
 
-        if tmax is not None and tmax >= HEAT_ORANGE_C:
-            alerts.append(WeatherAlert(
-                f"heuristic_heat_{suffix}", "orange", "heat", f"Caldo estremo ({label})",
-                f"Temperatura massima prevista {label}: {tmax:.0f}°C.", "heuristic", day=suffix,
-            ))
-        elif tmax is not None and tmax >= HEAT_YELLOW_C:
-            alerts.append(WeatherAlert(
-                f"heuristic_heat_{suffix}", "yellow", "heat", f"Caldo intenso ({label})",
-                f"Temperatura massima prevista {label}: {tmax:.0f}°C.", "heuristic", day=suffix,
-            ))
+        heat_id = f"heuristic_heat_{suffix}"
+        cold_id = f"heuristic_cold_{suffix}"
+        heat_active = heat_id in active
+        cold_active = cold_id in active
 
-        if tmin is not None and tmin <= COLD_ORANGE_C:
-            alerts.append(WeatherAlert(
-                f"heuristic_cold_{suffix}", "orange", "cold", f"Gelo intenso ({label})",
-                f"Temperatura minima prevista {label}: {tmin:.0f}°C.", "heuristic", day=suffix,
-            ))
-        elif tmin is not None and tmin <= COLD_YELLOW_C:
-            alerts.append(WeatherAlert(
-                f"heuristic_cold_{suffix}", "yellow", "cold", f"Gelo ({label})",
-                f"Temperatura minima prevista {label}: {tmin:.0f}°C.", "heuristic", day=suffix,
-            ))
+        if tmax is not None:
+            # Trigger orange at HEAT_ORANGE_C; keep alive until HEAT_ORANGE_C - h
+            # Trigger yellow at HEAT_YELLOW_C; keep alive until HEAT_YELLOW_C - h
+            if tmax >= HEAT_ORANGE_C or (heat_active and tmax >= HEAT_ORANGE_C - h):
+                alerts.append(WeatherAlert(
+                    heat_id, "orange", "heat", f"Caldo estremo ({label})",
+                    f"Temperatura massima prevista {label}: {tmax:.0f}°C.", "heuristic", day=suffix,
+                ))
+            elif tmax >= HEAT_YELLOW_C or (heat_active and tmax >= HEAT_YELLOW_C - h):
+                alerts.append(WeatherAlert(
+                    heat_id, "yellow", "heat", f"Caldo intenso ({label})",
+                    f"Temperatura massima prevista {label}: {tmax:.0f}°C.", "heuristic", day=suffix,
+                ))
+
+        if tmin is not None:
+            if tmin <= COLD_ORANGE_C or (cold_active and tmin <= COLD_ORANGE_C + c):
+                alerts.append(WeatherAlert(
+                    cold_id, "orange", "cold", f"Gelo intenso ({label})",
+                    f"Temperatura minima prevista {label}: {tmin:.0f}°C.", "heuristic", day=suffix,
+                ))
+            elif tmin <= COLD_YELLOW_C or (cold_active and tmin <= COLD_YELLOW_C + c):
+                alerts.append(WeatherAlert(
+                    cold_id, "yellow", "cold", f"Gelo ({label})",
+                    f"Temperatura minima prevista {label}: {tmin:.0f}°C.", "heuristic", day=suffix,
+                ))
 
         return alerts
 
     @staticmethod
     def _wind(
-        summary: dict[str, Any], current: dict[str, Any], suffix: str, label: str
+        summary: dict[str, Any], current: dict[str, Any],
+        suffix: str, label: str, active: frozenset[str]
     ) -> list[WeatherAlert]:
         speed = summary.get("wind_speed")
         if speed is None:
@@ -145,14 +186,18 @@ class HeuristicAlertProvider(AlertProvider):
         if speed is None:
             return []
 
-        if speed >= WIND_ORANGE_KMH:
+        wind_id = f"heuristic_wind_{suffix}"
+        wind_active = wind_id in active
+        h = WIND_HYSTERESIS_KMH
+
+        if speed >= WIND_ORANGE_KMH or (wind_active and speed >= WIND_ORANGE_KMH - h):
             return [WeatherAlert(
-                f"heuristic_wind_{suffix}", "orange", "wind", f"Vento forte ({label})",
+                wind_id, "orange", "wind", f"Vento forte ({label})",
                 f"Velocità del vento prevista {label}: {speed:.0f} km/h.", "heuristic", day=suffix,
             )]
-        if speed >= WIND_YELLOW_KMH:
+        if speed >= WIND_YELLOW_KMH or (wind_active and speed >= WIND_YELLOW_KMH - h):
             return [WeatherAlert(
-                f"heuristic_wind_{suffix}", "yellow", "wind", f"Vento sostenuto ({label})",
+                wind_id, "yellow", "wind", f"Vento sostenuto ({label})",
                 f"Velocità del vento prevista {label}: {speed:.0f} km/h.", "heuristic", day=suffix,
             )]
         return []
@@ -161,6 +206,7 @@ class HeuristicAlertProvider(AlertProvider):
     def _storm_hail(
         hours: list[dict[str, Any]], current: dict[str, Any], suffix: str, label: str
     ) -> list[WeatherAlert]:
+        # No hysteresis for storm/hail: condition_text is binary (present/absent)
         texts = [h.get("condition_text") or "" for h in hours]
         texts.append(current.get("condition_text") or "")
         joined = " ".join(texts).lower()
@@ -184,11 +230,17 @@ class HeuristicAlertProvider(AlertProvider):
         return alerts
 
     @staticmethod
-    def _rain(summary: dict[str, Any], suffix: str, label: str) -> list[WeatherAlert]:
+    def _rain(
+        summary: dict[str, Any], suffix: str, label: str, active: frozenset[str]
+    ) -> list[WeatherAlert]:
         prob = summary.get("precipitation_probability")
-        if prob is not None and prob >= RAIN_PROB_YELLOW:
+        if prob is None:
+            return []
+        rain_id = f"heuristic_rain_{suffix}"
+        h = RAIN_PROB_HYSTERESIS
+        if prob >= RAIN_PROB_YELLOW or (rain_id in active and prob >= RAIN_PROB_YELLOW - h):
             return [WeatherAlert(
-                f"heuristic_rain_{suffix}", "yellow", "rain", f"Piogge probabili ({label})",
+                rain_id, "yellow", "rain", f"Piogge probabili ({label})",
                 f"Probabilità di precipitazioni {label}: {prob:.0f}%.", "heuristic", day=suffix,
             )]
         return []
@@ -221,7 +273,8 @@ class DpcSensorAlertProvider(AlertProvider):
         self.entity_id = entity_id
 
     async def async_get_alerts(
-        self, coordinator_data: dict[str, Any], citta: str, place_name: str
+        self, coordinator_data: dict[str, Any], citta: str, place_name: str,
+        active_alert_ids: frozenset[str] | None = None,
     ) -> list[WeatherAlert]:
         state = self.hass.states.get(self.entity_id)
         if state is None or state.state in ("unknown", "unavailable"):
@@ -297,7 +350,8 @@ class DpcVigilanceProvider(AlertProvider):
         self.entity_id = entity_id
 
     async def async_get_alerts(
-        self, coordinator_data: dict[str, Any], citta: str, place_name: str
+        self, coordinator_data: dict[str, Any], citta: str, place_name: str,
+        active_alert_ids: frozenset[str] | None = None,
     ) -> list[WeatherAlert]:
         state = self.hass.states.get(self.entity_id)
         if state is None or state.state in ("unknown", "unavailable"):

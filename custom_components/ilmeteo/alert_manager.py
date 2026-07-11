@@ -87,7 +87,8 @@ class IlMeteoAlertManager:
         for provider in self.providers:
             try:
                 alerts += await provider.async_get_alerts(
-                    data, self.citta, self.place_name
+                    data, self.citta, self.place_name,
+                    active_alert_ids=frozenset(self._active),
                 )
             except Exception:  # noqa: BLE001 - one bad provider must not break others
                 _LOGGER.exception(
@@ -95,7 +96,6 @@ class IlMeteoAlertManager:
                 )
 
         current = {alert.alert_id: alert for alert in alerts}
-        link = self._link_for(data)
 
         # Determine which days changed (new alert, severity change, or cleared)
         changed_days: set[str] = set()

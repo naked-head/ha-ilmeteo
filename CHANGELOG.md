@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-07-09
+### Added
+- Hysteresis for heuristic alert thresholds: once an alert is active, it is kept alive until the value drops a fixed delta below the trigger threshold, preventing rapid on/off oscillation when values hover near a boundary between 30-minute refreshes. Deltas: heat/cold ±2°C, wind ±5 km/h, rain probability ±5%. Storm and hail alerts have no hysteresis (condition_text is binary).
+- `active_alert_ids` parameter added to `AlertProvider.async_get_alerts()` ABC; all providers accept it (DPC providers ignore it as their data is already authoritative).
+
 ## [1.1.0] - 2026-07-06
 ### Changed
 - **Batched notifications per day**: all active alerts for the same day (today / tomorrow / day-after-tomorrow) are now grouped into a single `persistent_notification` and a single mobile push, instead of one notification per alert. The notification is re-rendered when the set of alerts for that day changes (new alert, severity change, or cleared alert) and dismissed when no alerts remain. This eliminates the "3 simultaneous notifications" noise from vigilance bulletins carrying multiple phenomena.
@@ -163,7 +168,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 - Initial draft based on the official iLMeteo REST API (later abandoned, enterprise-only).
 
-[Unreleased]: https://github.com/naked-head/ha-ilmeteo/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/naked-head/ha-ilmeteo/compare/v1.1.1...HEAD
+[1.1.1]: https://github.com/naked-head/ha-ilmeteo/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/naked-head/ha-ilmeteo/compare/v1.0.1...v1.1.0
 [1.0.1]: https://github.com/naked-head/ha-ilmeteo/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/naked-head/ha-ilmeteo/compare/v0.7.5...v1.0.0

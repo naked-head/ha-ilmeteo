@@ -1,0 +1,94 @@
+name: Bug Report
+description: Report a problem with the iLMeteo.it integration
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before opening an issue, please check if a similar one already exists.
+        Logs are essential — without them it is very hard to diagnose the problem.
+
+  - type: input
+    id: integration_version
+    attributes:
+      label: Integration version
+      description: Found in Settings → Devices & Services → iLMeteo.it → three-dot menu → Integration information, or in CHANGELOG.md.
+      placeholder: "e.g. 1.1.2"
+    validations:
+      required: true
+
+  - type: input
+    id: ha_version
+    attributes:
+      label: Home Assistant version
+      description: Found in Settings → About.
+      placeholder: "e.g. 2026.7.1"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: ha_installation
+    attributes:
+      label: Home Assistant installation type
+      options:
+        - Home Assistant OS
+        - Home Assistant Supervised
+        - Home Assistant Container
+        - Home Assistant Core
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Describe the problem clearly. What did you do, what did you expect, what happened instead?
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Go to ...
+        2. Click on ...
+        3. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log output
+      description: |
+        Enable debug logging first — add this to `configuration.yaml`, restart HA, reproduce the issue, then paste the relevant lines here.
+        ```yaml
+        logger:
+          default: warning
+          logs:
+            custom_components.ilmeteo: debug
+        ```
+      render: text
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: configuration
+    attributes:
+      label: Configuration
+      description: Which optional features are enabled for the affected location?
+      options:
+        - label: Optional dedicated sensors (temperature, humidity, wind, etc.)
+        - label: Weather alert notifications
+        - label: DPC Alert entity (sensor.dpc_alert)
+        - label: DPC Vigilance entity (sensor.dpc_vigilance)
+        - label: Mobile push notifications (notify.mobile_app_*)
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional context
+      description: Anything else that might be relevant — automations, Lovelace cards, other integrations, etc.
+    validations:
+      required: false

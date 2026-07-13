@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.1.2] - 2026-07-13
+### Fixed
+- Critical: `NameError: name 'link' is not defined` in `alert_manager._evaluate()` introduced in 1.1.1 prevented the integration from setting up and silently dropped all notifications. (Moved from 1.1.1 changelog entry to this dedicated release.)
+- Reconfigure flow now pre-selects the currently configured region, province and city instead of defaulting to the first alphabetical entry. Added `location_data.lookup_location()` for reverse lookup of a city code to its region/province/city name.
+
 ## [1.1.1] - 2026-07-09
 ### Added
 - Hysteresis for heuristic alert thresholds: once an alert is active, it is kept alive until the value drops a fixed delta below the trigger threshold, preventing rapid on/off oscillation when values hover near a boundary between 30-minute refreshes. Deltas: heat/cold ±2°C, wind ±5 km/h, rain probability ±5%. Storm and hail alerts have no hysteresis (condition_text is binary).
@@ -168,7 +173,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 - Initial draft based on the official iLMeteo REST API (later abandoned, enterprise-only).
 
-[Unreleased]: https://github.com/naked-head/ha-ilmeteo/compare/v1.1.1...HEAD
+[Unreleased]: https://github.com/naked-head/ha-ilmeteo/compare/v1.1.2...HEAD
+[1.1.2]: https://github.com/naked-head/ha-ilmeteo/compare/v1.1.1...v1.1.2
 [1.1.1]: https://github.com/naked-head/ha-ilmeteo/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/naked-head/ha-ilmeteo/compare/v1.0.1...v1.1.0
 [1.0.1]: https://github.com/naked-head/ha-ilmeteo/compare/v1.0.0...v1.0.1

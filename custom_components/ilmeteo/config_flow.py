@@ -291,6 +291,13 @@ class IlMeteoConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self, user_input: dict[str, Any] | None = None
     ) -> config_entries.FlowResult:
         """Entry point when the user selects "Reconfigure"."""
+        entry = self._get_reconfigure_entry()
+        citta = entry.data.get(CONF_CITTA, "")
+        location = await self.hass.async_add_executor_job(
+            location_data.lookup_location, citta
+        )
+        if location:
+            self._region, self._province, self._city_name = location
         return await self.async_step_reconfigure_region()
 
     async def async_step_reconfigure_region(
@@ -301,9 +308,12 @@ class IlMeteoConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             return await self.async_step_reconfigure_province()
 
         regions = await self.hass.async_add_executor_job(location_data.get_regions)
+        current = self._region or regions[0]
         return self.async_show_form(
             step_id="reconfigure_region",
-            data_schema=vol.Schema({vol.Required(CONF_REGION): vol.In(regions)}),
+            data_schema=vol.Schema(
+                {vol.Required(CONF_REGION, default=current): vol.In(regions)}
+            ),
         )
 
     async def async_step_reconfigure_province(
@@ -316,9 +326,12 @@ class IlMeteoConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         provinces = await self.hass.async_add_executor_job(
             location_data.get_provinces, self._region
         )
+        current = self._province if self._province in provinces else provinces[0]
         return self.async_show_form(
             step_id="reconfigure_province",
-            data_schema=vol.Schema({vol.Required(CONF_PROVINCE): vol.In(provinces)}),
+            data_schema=vol.Schema(
+                {vol.Required(CONF_PROVINCE, default=current): vol.In(provinces)}
+            ),
             description_placeholders={"region": self._region},
         )
 
@@ -329,6 +342,7 @@ class IlMeteoConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         cities = await self.hass.async_add_executor_job(
             location_data.get_cities, self._region, self._province
         )
+        city_names = sorted(cities.keys())
 
         if user_input is not None:
             city = user_input[CONF_CITY]
@@ -363,10 +377,11 @@ class IlMeteoConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                             },
                         )
 
+        current_city = self._city_name if self._city_name in city_names else city_names[0]
         return self.async_show_form(
             step_id="reconfigure_city",
             data_schema=vol.Schema(
-                {vol.Required(CONF_CITY): vol.In(sorted(cities.keys()))}
+                {vol.Required(CONF_CITY, default=current_city): vol.In(city_names)}
             ),
             errors=errors,
             description_placeholders={

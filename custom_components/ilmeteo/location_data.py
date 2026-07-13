@@ -39,3 +39,13 @@ def get_cities(region: str, province: str) -> dict[str, str]:
 def resolve_code(region: str, province: str, city: str) -> str | None:
     """Return the iLMeteo code for a given region/province/city."""
     return get_cities(region, province).get(city)
+
+
+def lookup_location(citta_code: str) -> tuple[str, str, str] | None:
+    """Return (region, province, city_name) for an iLMeteo city code, or None."""
+    for region, provinces in _load()["regions"].items():
+        for province, cities in provinces.items():
+            for city_name, code in cities.items():
+                if code == citta_code:
+                    return region, province, city_name
+    return None

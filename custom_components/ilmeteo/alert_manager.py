@@ -96,6 +96,7 @@ class IlMeteoAlertManager:
                 )
 
         current = {alert.alert_id: alert for alert in alerts}
+        link = self._link_for(data)
 
         # Determine which days changed (new alert, severity change, or cleared)
         changed_days: set[str] = set()

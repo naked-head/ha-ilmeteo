@@ -1,31 +1,27 @@
 name: Tests
-
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
   test:
-    name: Run parser test suite (Python ${{ matrix.python-version }})
+    name: Run test suite
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ["3.12", "3.13"]
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
-
+          python-version: "3.13"
       - name: Install dependencies
         run: pip install aiohttp
-
-      - name: Run test suite
+      - name: Run parser tests
         run: python tests/test_parser.py
+      - name: Run alert tests
+        run: python tests/test_alerts.py

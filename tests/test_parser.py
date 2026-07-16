@@ -10,9 +10,9 @@ sys.path.insert(
     0, os.path.join(os.path.dirname(__file__), "..", "custom_components", "ilmeteo")
 )
 
-from api import parse_box, wind_bearing, parse_real1, parse_day1  # noqa: E402
-from const import map_condition  # noqa: E402
-import location_data as _ld  # noqa: E402
+import location_data as _ld
+from api import parse_box, parse_day1, parse_real1, wind_bearing
+from const import map_condition
 
 SAMPLE = os.path.join(os.path.dirname(__file__), "fixtures", "box_b_roma.html")
 
@@ -153,7 +153,7 @@ def test_day1_parses_all_fields_correctly():
         (19.0, 35.0, 10.0),
         (19.0, 35.0, 10.0),
     ]
-    for day, (tmin, tmax, prob) in zip(days, expected):
+    for day, (tmin, tmax, prob) in zip(days, expected, strict=True):
         assert day["temp_min"] == tmin
         assert day["temp_max"] == tmax
         assert day["precipitation_probability"] == prob

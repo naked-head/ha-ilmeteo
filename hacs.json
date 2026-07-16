@@ -2,6 +2,6 @@
   "name": "iLMeteo.it",
   "content_in_root": false,
   "render_readme": true,
-  "homeassistant": "2024.1.0",
+  "homeassistant": "2026.5.0",
   "country": ["IT"]
 }

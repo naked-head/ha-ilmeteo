@@ -90,7 +90,7 @@ class IlMeteoAlertManager:
                     data, self.citta, self.place_name,
                     active_alert_ids=frozenset(self._active),
                 )
-            except Exception:  # noqa: BLE001 - one bad provider must not break others
+            except Exception:
                 _LOGGER.exception(
                     "Alert provider %s failed for %s", provider.name, self.place_name
                 )
@@ -253,5 +253,5 @@ class IlMeteoAlertManager:
                 },
                 blocking=False,
             )
-        except Exception:  # noqa: BLE001
+        except Exception:
             _LOGGER.exception("Push to %s failed", target)

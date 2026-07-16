@@ -2,8 +2,9 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Awaitable, Callable
 from datetime import timedelta
-from typing import Any, Awaitable, Callable, TypeVar
+from typing import Any, TypeVar
 
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import issue_registry as ir

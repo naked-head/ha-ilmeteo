@@ -13,7 +13,7 @@ sys.path.insert(
     0, os.path.join(os.path.dirname(__file__), "..", "custom_components", "ilmeteo")
 )
 
-from alerts import DpcSensorAlertProvider, HeuristicAlertProvider  # noqa: E402
+from alerts import DpcSensorAlertProvider, HeuristicAlertProvider
 
 
 def _run(coro):

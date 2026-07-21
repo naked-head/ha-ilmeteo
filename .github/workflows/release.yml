@@ -1,10 +1,8 @@
 name: Release
-
 on:
   push:
     tags:
       - "v*.*.*"
-
 jobs:
   release:
     name: Create GitHub Release
@@ -13,24 +11,23 @@ jobs:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     permissions:
       contents: write
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Get version from tag
         id: version
-        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
-
+        run: |
+          echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
+          BASE="${GITHUB_REF_NAME#v}"; BASE="${BASE%%-*}"
+          echo "BASE_VERSION=${BASE}" >> $GITHUB_OUTPUT
       - name: Update manifest version
         run: |
-          sed -i 's/"version": ".*"/"version": "${{ steps.version.outputs.VERSION }}"/' \
+          sed -i 's/"version": ".*"/"version": "${{ steps.version.outputs.BASE_VERSION }}"/' \
             custom_components/ilmeteo/manifest.json
-
       - name: Extract changelog section
         id: changelog
         run: |
-          awk -v ver="${{ steps.version.outputs.VERSION }}" '
+          awk -v ver="${{ steps.version.outputs.BASE_VERSION }}" '
             $0 ~ "^## \\[" ver "\\]" { found=1; next }
             found && /^## \[/ { exit }
             found && /^\[.*\]: http/ { exit }
@@ -38,11 +35,9 @@ jobs:
           ' CHANGELOG.md > release_notes.md
           echo "Extracted notes:"
           cat release_notes.md
-
       - name: Create release zip
         run: |
           zip -r ilmeteo.zip custom_components/
-
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -50,5 +45,5 @@ jobs:
           name: "ha-ilmeteo ${{ github.ref_name }}"
           body_path: release_notes.md
           draft: false
-          prerelease: false
+          prerelease: ${{ contains(github.ref_name, '-') }}
           files: ilmeteo.zip

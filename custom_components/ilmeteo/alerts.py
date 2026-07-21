@@ -148,8 +148,6 @@ class HeuristicAlertProvider(AlertProvider):
         cold_active = cold_id in active
 
         if tmax is not None:
-            # Trigger orange at HEAT_ORANGE_C; keep alive until HEAT_ORANGE_C - h
-            # Trigger yellow at HEAT_YELLOW_C; keep alive until HEAT_YELLOW_C - h
             if tmax >= HEAT_ORANGE_C or (heat_active and tmax >= HEAT_ORANGE_C - h):
                 alerts.append(WeatherAlert(
                     heat_id, "orange", "heat", f"Caldo estremo ({label})",
@@ -206,7 +204,6 @@ class HeuristicAlertProvider(AlertProvider):
     def _storm_hail(
         hours: list[dict[str, Any]], current: dict[str, Any], suffix: str, label: str
     ) -> list[WeatherAlert]:
-        # No hysteresis for storm/hail: condition_text is binary (present/absent)
         texts = [h.get("condition_text") or "" for h in hours]
         texts.append(current.get("condition_text") or "")
         joined = " ".join(texts).lower()
@@ -246,9 +243,13 @@ class HeuristicAlertProvider(AlertProvider):
         return []
 
 
-# Bollettino di criticità: livello -> colore (0=bianco, 1=verde: nessuna
-# allerta -> ignorati; 2=giallo, 3=arancione, 4=rosso).
+# Bollettino di criticità: livello -> (colore, etichetta leggibile)
 DPC_LEVEL_SEVERITY = {2: "yellow", 3: "orange", 4: "red"}
+DPC_LEVEL_LABEL = {
+    2: "Ordinaria criticità",
+    3: "Moderata criticità",
+    4: "Elevata criticità",
+}
 DPC_RISK_KIND = {
     "Temporali": "storm",
     "Idraulico": "flood",
@@ -286,15 +287,19 @@ class DpcSensorAlertProvider(AlertProvider):
             ("events_tomorrow", "domani"),
         ):
             for event in state.attributes.get(day_key) or []:
-                severity = DPC_LEVEL_SEVERITY.get(event.get("level"))
+                level = event.get("level")
+                severity = DPC_LEVEL_SEVERITY.get(level)
                 if severity is None:
                     continue
                 risk = event.get("risk", "?")
+                level_label = DPC_LEVEL_LABEL.get(level, "Allerta")
+                title = f"Protezione Civile: {level_label} per rischio {risk} ({day_label})"
+                message = f"Protezione Civile: {level_label} per rischio {risk} — {day_label}."
                 alerts.append(WeatherAlert(
                     f"dpc_{risk.lower()}_{day_key}", severity,
                     DPC_RISK_KIND.get(risk, "other"),
-                    f"{event.get('alert', 'Allerta')} — {risk} ({day_label})",
-                    f"{event.get('info', '')} — rischio {risk}, {day_label}.".strip(),
+                    title,
+                    message,
                     "protezione_civile",
                     day="today" if day_key == "events_today" else "tomorrow",
                 ))
@@ -306,13 +311,16 @@ class DpcSensorAlertProvider(AlertProvider):
                 day = state.attributes.get(day_key)
                 if not day:
                     continue
-                severity = DPC_LEVEL_SEVERITY.get(day.get("level"))
+                level = day.get("level")
+                severity = DPC_LEVEL_SEVERITY.get(level)
                 if severity is None:
                     continue
+                level_label = DPC_LEVEL_LABEL.get(level, "Allerta")
                 alerts.append(WeatherAlert(
                     f"dpc_{day_key}", severity, "other",
-                    f"{day.get('alert', 'Allerta')} ({day_label})",
-                    f"{day.get('info', '')} ({day_label}).", "protezione_civile",
+                    f"Protezione Civile: {level_label} ({day_label})",
+                    f"Protezione Civile: {level_label} — {day_label}.",
+                    "protezione_civile",
                     day=day_key,
                 ))
 
@@ -367,24 +375,25 @@ class DpcVigilanceProvider(AlertProvider):
             if not day:
                 continue
 
-            day_severity = DPC_LEVEL_SEVERITY.get(day.get("level"))
+            level = day.get("level")
+            day_severity = DPC_LEVEL_SEVERITY.get(level)
+            level_label = DPC_LEVEL_LABEL.get(level, "Allerta")
 
             # Level-based alert for the day block
             if day_severity is not None:
                 precip = day.get("precipitation", "")
+                message = f"Protezione Civile: {level_label} — vigilanza meteorologica {day_label}"
+                if precip:
+                    message += f". Precipitazioni: {precip}"
+                message += "."
                 alerts.append(WeatherAlert(
                     f"dpc_vigilance_{day_key}", day_severity, "rain",
-                    f"Vigilanza meteo ({day_label})",
-                    f"Precipitazioni previste {day_label}: {precip}.".strip(),
+                    f"Protezione Civile: vigilanza meteorologica ({day_label})",
+                    message,
                     "protezione_civile_vigilance",
                     day=day_key,
                 ))
 
-            # Phenomena alerts: only if the day level meets the threshold.
-            # Phenomena don't carry their own level — we use the day level.
-            # Distance/direction are geographic coordinates of the zone centroid
-            # and are meaningful only for spatially localised phenomena (wind,
-            # storms, snow) — not for temperature which affects the whole zone.
             if day_severity is None:
                 continue
 
@@ -398,13 +407,13 @@ class DpcVigilanceProvider(AlertProvider):
                 alert_id = (
                     f"dpc_vigilance_{day_key}_{event.lower().replace(' ', '_')}"
                 )
-                desc_parts = [f"{event} {value}".strip()]
+                desc_parts = [f"Protezione Civile: {level_label} — {event} {value}".strip()]
                 if event in PHENOMENA_WITH_LOCATION and distance is not None and direction:
                     desc_parts.append(f"a {distance} km in direzione {direction}")
                 alerts.append(WeatherAlert(
                     alert_id, day_severity,
                     DPC_VIGILANCE_KIND.get(event, "other"),
-                    f"{event} {value} ({day_label})".strip(),
+                    f"Protezione Civile: {event} {value} ({day_label})".strip(),
                     f"{', '.join(desc_parts)} — {day_label}.",
                     "protezione_civile_vigilance",
                     day=day_key,

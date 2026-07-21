@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.1.3] - 2026-07-21
+### Changed
+- DPC alert messages now follow the same format used by iLMeteo.it: "Protezione Civile: [Ordinaria/Moderata/Elevata] criticità per rischio [Tipo]". Added `DPC_LEVEL_LABEL` mapping (level 2→Ordinaria, 3→Moderata, 4→Elevata). Applied consistently to `DpcSensorAlertProvider`, its legacy fallback, and `DpcVigilanceProvider` (both the day-level alert and per-phenomenon messages).
+
 ## [1.1.2] - 2026-07-13
 ### Fixed
 - Critical: `NameError: name 'link' is not defined` in `alert_manager._evaluate()` introduced in 1.1.1 prevented the integration from setting up and silently dropped all notifications. (Moved from 1.1.1 changelog entry to this dedicated release.)
@@ -173,7 +177,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 - Initial draft based on the official iLMeteo REST API (later abandoned, enterprise-only).
 
-[Unreleased]: https://github.com/naked-head/ha-ilmeteo/compare/v1.1.2...HEAD
+[Unreleased]: https://github.com/naked-head/ha-ilmeteo/compare/v1.1.3...HEAD
+[1.1.3]: https://github.com/naked-head/ha-ilmeteo/compare/v1.1.2...v1.1.3
 [1.1.2]: https://github.com/naked-head/ha-ilmeteo/compare/v1.1.1...v1.1.2
 [1.1.1]: https://github.com/naked-head/ha-ilmeteo/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/naked-head/ha-ilmeteo/compare/v1.0.1...v1.1.0
@@ -182,7 +187,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 [0.7.5]: https://github.com/naked-head/ha-ilmeteo/compare/v0.7.4...v0.7.5
 [0.7.4]: https://github.com/naked-head/ha-ilmeteo/compare/v0.7.3...v0.7.4
 [0.7.3]: https://github.com/naked-head/ha-ilmeteo/compare/v0.7.2...v0.7.3
-[0.7.2]: https://github.com/naked-head/ha-ilmeteo/compare/v0.7.1...v0.7.2
 [0.7.2]: https://github.com/naked-head/ha-ilmeteo/compare/v0.7.1...v0.7.2
 [0.7.1]: https://github.com/naked-head/ha-ilmeteo/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/naked-head/ha-ilmeteo/compare/v0.6.2...v0.7.0

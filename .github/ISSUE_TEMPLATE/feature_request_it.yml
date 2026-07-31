@@ -7,8 +7,7 @@ body:
       value: |
         ## Prima di continuare
 
-        Descrivi cosa vorresti vedere e perché — più concreto è il caso d'uso,
-        più facile sarà valutarlo.
+        Descrivi cosa vorresti vedere e perché — più concreto è il caso d'uso, più facile sarà valutarlo.
 
   - type: checkboxes
     id: confirm-scope

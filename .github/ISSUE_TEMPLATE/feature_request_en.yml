@@ -7,8 +7,7 @@ body:
       value: |
         ## Before you continue
 
-        Please describe what you'd like to see and why — the more concrete the use
-        case, the easier it is to evaluate.
+        Please describe what you'd like to see and why — the more concrete the use case, the easier it is to evaluate.
 
   - type: checkboxes
     id: confirm-scope

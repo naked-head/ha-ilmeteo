@@ -1,19 +1,14 @@
 name: "Bug Report (English)"
 description: Report a problem with the iLMeteo.it integration
-labels: ["bug"]
 body:
   - type: markdown
     attributes:
       value: |
         ## Before you continue
 
-        Logs are essential — without them it is very hard to diagnose the problem.
-        Please enable debug logging, reproduce the issue, and paste the relevant
-        lines below.
+        Logs are essential — without them it is very hard to diagnose the problem. Please enable debug logging, reproduce the issue, and paste the relevant lines below.
 
-        **Note:** attachments sent via email reply to a GitHub issue notification are
-        automatically stripped and deleted by GitHub — they will not reach this issue.
-        Please attach files directly on github.com instead.
+        **Note:** attachments sent via email reply to a GitHub issue notification are automatically stripped and deleted by GitHub — they will not reach this issue. Please attach files directly on github.com instead.
 
   - type: checkboxes
     id: confirm-scope

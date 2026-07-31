@@ -1,19 +1,14 @@
 name: "Segnalazione Bug (Italiano)"
 description: Segnala un problema con l'integrazione iLMeteo.it
-labels: ["bug"]
 body:
   - type: markdown
     attributes:
       value: |
         ## Prima di continuare
 
-        I log sono essenziali — senza log è molto difficile diagnosticare il
-        problema. Attiva il debug logging, riproduci il problema e incolla qui
-        sotto le righe rilevanti.
+        I log sono essenziali — senza log è molto difficile diagnosticare il problema. Attiva il debug logging, riproduci il problema e incolla qui sotto le righe rilevanti.
 
-        **Nota:** gli allegati inviati rispondendo via email alla notifica di una
-        issue GitHub vengono automaticamente rimossi da GitHub — non arriveranno
-        alla issue. Allega i file direttamente su github.com.
+        **Nota:** gli allegati inviati rispondendo via email alla notifica di una issue GitHub vengono automaticamente rimossi da GitHub — non arriveranno alla issue. Allega i file direttamente su github.com.
 
   - type: checkboxes
     id: confirm-scope

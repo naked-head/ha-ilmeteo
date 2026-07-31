@@ -1,0 +1,58 @@
+name: "Richiesta Funzionalità (Italiano)"
+description: Proponi un'idea per l'integrazione iLMeteo.it
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Prima di continuare
+
+        Descrivi cosa vorresti vedere e perché — più concreto è il caso d'uso,
+        più facile sarà valutarlo.
+
+  - type: checkboxes
+    id: confirm-scope
+    attributes:
+      label: Conferma che la richiesta è pertinente
+      options:
+        - label: >-
+            Sono consapevole che naked-head è un maintainer scorbutico, quindi può
+            capitare che la mia issue venga chiusa rapidamente se mancano
+            informazioni essenziali (nessuna descrizione, nessun caso d'uso, ecc.).
+          required: true
+        - label: Ho letto il README dell'integrazione e questa richiesta non è già coperta.
+          required: true
+        - label: >-
+            Ho controllato le issue esistenti (comprese quelle chiuse) per
+            assicurarmi che non sia una richiesta duplicata.
+          required: true
+        - label: |
+            Confermo che in realtà non ho letto nessuno dei punti sopra e li ho semplicemente spuntati tutti. |
+            Non volevo perdere tempo sui dettagli, quindi ho saltato la lettura o il rispetto delle istruzioni esistenti. |
+            Preferirei che naked-head passasse il suo tempo libero a spiegarmi le cose — no perché l'open source è fatto apposta per questo, giusto? |
+            Vivo secondo il motto: meglio chiedere due volte che pensare una volta. |
+            È colpa di naked-head se offre software open source e supporto gratuito.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Descrivi la funzionalità
+      description: Cosa vorresti vedere, e perché?
+    validations:
+      required: true
+
+  - type: textarea
+    id: use-case
+    attributes:
+      label: Caso d'uso
+      description: Che problema risolve per te? Come la useresti?
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Contesto aggiuntivo
+      description: Mockup, link a funzionalità simili altrove, ecc.
+    validations:
+      required: false

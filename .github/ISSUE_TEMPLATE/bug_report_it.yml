@@ -1,0 +1,136 @@
+name: "Segnalazione Bug (Italiano)"
+description: Segnala un problema con l'integrazione iLMeteo.it
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Prima di continuare
+
+        I log sono essenziali — senza log è molto difficile diagnosticare il
+        problema. Attiva il debug logging, riproduci il problema e incolla qui
+        sotto le righe rilevanti.
+
+        **Nota:** gli allegati inviati rispondendo via email alla notifica di una
+        issue GitHub vengono automaticamente rimossi da GitHub — non arriveranno
+        alla issue. Allega i file direttamente su github.com.
+
+  - type: checkboxes
+    id: confirm-scope
+    attributes:
+      label: Conferma che la segnalazione è pertinente
+      options:
+        - label: >-
+            Sono consapevole che naked-head è un maintainer scorbutico, quindi può
+            capitare che la mia issue venga chiusa rapidamente se mancano
+            informazioni essenziali (nessun log, nessuna descrizione, nessun
+            passaggio per riprodurre il problema, ecc.).
+          required: true
+        - label: La mia versione di Home Assistant è aggiornata.
+          required: true
+        - label: >-
+            Ho verificato, tramite il menu a tre puntini di HACS → "Update
+            Information" su questa integrazione, di avere installata l'**ultima**
+            versione rilasciata.
+          required: true
+        - label: Ho letto il README dell'integrazione prima di aprire questa issue.
+          required: true
+        - label: >-
+            Ho controllato le issue esistenti (comprese quelle chiuse) per
+            assicurarmi che non sia un duplicato.
+          required: true
+        - label: >-
+            Confermo che questo è realmente un problema con l'integrazione (non
+            solo una domanda su come funziona una funzionalità).
+          required: true
+        - label: |
+            Confermo che in realtà non ho letto nessuno dei punti sopra e li ho semplicemente spuntati tutti. |
+            Non volevo perdere tempo sui dettagli, quindi ho saltato la lettura o il rispetto delle istruzioni esistenti. |
+            Preferirei che naked-head passasse il suo tempo libero a spiegarmi le cose — no perché l'open source è fatto apposta per questo, giusto? |
+            Vivo secondo il motto: meglio chiedere due volte che pensare una volta. |
+            È colpa di naked-head se offre software open source e supporto gratuito.
+
+  - type: input
+    id: integration_version
+    attributes:
+      label: Versione dell'integrazione
+      description: La trovi in Impostazioni → Dispositivi e Servizi → iLMeteo.it → menu a tre puntini → Informazioni sull'integrazione, oppure in CHANGELOG.md.
+      placeholder: "es. 1.1.2"
+    validations:
+      required: true
+
+  - type: input
+    id: ha_version
+    attributes:
+      label: Versione di Home Assistant
+      description: La trovi in Impostazioni → Informazioni.
+      placeholder: "es. 2026.7.1"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: ha_installation
+    attributes:
+      label: Tipo di installazione Home Assistant
+      options:
+        - Home Assistant OS
+        - Home Assistant Supervised
+        - Home Assistant Container
+        - Home Assistant Core
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Cosa è successo?
+      description: Descrivi il problema chiaramente. Cosa hai fatto, cosa ti aspettavi, cosa è successo invece?
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Passaggi per riprodurre il problema
+      placeholder: |
+        1. Vai su ...
+        2. Clicca su ...
+        3. Vedi l'errore
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Log rilevanti
+      description: |
+        Attiva prima il debug logging — aggiungi questo a `configuration.yaml`, riavvia HA, riproduci il problema, poi incolla qui le righe rilevanti.
+        ```yaml
+        logger:
+          default: warning
+          logs:
+            custom_components.ilmeteo: debug
+        ```
+      render: text
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: configuration
+    attributes:
+      label: Configurazione
+      description: Quali funzionalità opzionali sono abilitate per la località interessata?
+      options:
+        - label: Sensori dedicati opzionali (temperatura, umidità, vento, ecc.)
+        - label: Notifiche di allerta meteo
+        - label: Entità DPC Alert (sensor.dpc_alert)
+        - label: Entità DPC Vigilance (sensor.dpc_vigilance)
+        - label: Notifiche push mobile (notify.mobile_app_*)
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Contesto aggiuntivo
+      description: Qualsiasi altra cosa rilevante — automazioni, card Lovelace, altre integrazioni, ecc.
+    validations:
+      required: false

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.1.4] - 2026-08-09
+### Fixed
+- Weather entity showed `sunny` instead of `clear-night` at night with clear skies (closes #7). Root cause: iLMeteo's `real1` box never uses night condition codes (≥100), unlike `tri1`. Fixed by applying night correction in `weather.py` independently of the condition code: current conditions use `homeassistant.helpers.sun.is_up()`, hourly forecast slots use a time-of-day heuristic (21:00–06:00). Daily forecasts are unaffected.
+
 ## [1.1.3] - 2026-07-21
 ### Changed
 - DPC alert messages now follow the same format used by iLMeteo.it: "Protezione Civile: [Ordinaria/Moderata/Elevata] criticità per rischio [Tipo]". Added `DPC_LEVEL_LABEL` mapping (level 2→Ordinaria, 3→Moderata, 4→Elevata). Applied consistently to `DpcSensorAlertProvider`, its legacy fallback, and `DpcVigilanceProvider` (both the day-level alert and per-phenomenon messages).
@@ -177,7 +181,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 - Initial draft based on the official iLMeteo REST API (later abandoned, enterprise-only).
 
-[Unreleased]: https://github.com/naked-head/ha-ilmeteo/compare/v1.1.3...HEAD
+[Unreleased]: https://github.com/naked-head/ha-ilmeteo/compare/v1.1.4...HEAD
+[1.1.4]: https://github.com/naked-head/ha-ilmeteo/compare/v1.1.3...v1.1.4
 [1.1.3]: https://github.com/naked-head/ha-ilmeteo/compare/v1.1.2...v1.1.3
 [1.1.2]: https://github.com/naked-head/ha-ilmeteo/compare/v1.1.1...v1.1.2
 [1.1.1]: https://github.com/naked-head/ha-ilmeteo/compare/v1.1.0...v1.1.1

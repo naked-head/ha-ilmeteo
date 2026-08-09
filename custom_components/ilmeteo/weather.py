@@ -16,6 +16,7 @@ from homeassistant.const import (
     UnitOfTemperature,
 )
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import sun as sun_helper
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.util import dt as dt_util
@@ -41,6 +42,21 @@ async def async_setup_entry(
     """Set up the weather entity for a config entry."""
     coordinator: IlMeteoCoordinator = hass.data[DOMAIN][entry.entry_id]
     async_add_entities([IlMeteoWeather(coordinator, entry)])
+
+
+def _apply_night(condition: str | None, is_night: bool) -> str | None:
+    """Convert 'sunny' and 'partlycloudy' to their night variants when dark.
+
+    iLMeteo's real1 box does not use night codes (>=100) — only tri1 does,
+    and even then only sporadically. We apply the correction ourselves using
+    HA's sun helper for current conditions, and the slot timestamp for hourly
+    forecasts.
+    """
+    if not is_night or condition is None:
+        return condition
+    if condition == "sunny":
+        return "clear-night"
+    return condition
 
 
 class IlMeteoWeather(CoordinatorEntity[IlMeteoCoordinator], WeatherEntity):
@@ -124,7 +140,9 @@ class IlMeteoWeather(CoordinatorEntity[IlMeteoCoordinator], WeatherEntity):
         cur = self._current
         if not cur.get("condition_text") and not cur.get("condition_code"):
             return None
-        return map_condition(cur.get("condition_text"), cur.get("condition_code"))
+        raw = map_condition(cur.get("condition_text"), cur.get("condition_code"))
+        # real1 never uses night codes (>=100) — correct using HA's sun helper.
+        return _apply_night(raw, not sun_helper.is_up(self.hass))
 
     # ------------------------------------------------------------------
     # Forecasts
@@ -157,6 +175,7 @@ class IlMeteoWeather(CoordinatorEntity[IlMeteoCoordinator], WeatherEntity):
                     precipitation_probability=d.get("precipitation_probability"),
                     native_wind_speed=d.get("wind_speed"),
                     wind_bearing=wind_bearing(d.get("wind_dir")),
+                    # Daily forecasts represent the whole day — no night correction.
                     condition=map_condition(None, d.get("condition_code")),
                 )
             )
@@ -168,6 +187,13 @@ class IlMeteoWeather(CoordinatorEntity[IlMeteoCoordinator], WeatherEntity):
         for day in self._days:
             for h in day.get("hours") or []:
                 dt = _parse_slot_time(day.get("date"), h.get("time"))
+                raw = map_condition(
+                    h.get("condition_text"), h.get("condition_code")
+                )
+                # tri1 uses night codes (>=100) when iLMeteo provides them,
+                # but not always. Apply the correction from the slot's local
+                # time as a reliable fallback.
+                is_night = _is_night_at(dt) if dt else False
                 forecasts.append(
                     Forecast(
                         datetime=(dt or dt_util.now()).isoformat(),
@@ -177,9 +203,7 @@ class IlMeteoWeather(CoordinatorEntity[IlMeteoCoordinator], WeatherEntity):
                         native_precipitation=h.get("precipitation"),
                         native_wind_speed=h.get("wind_speed"),
                         wind_bearing=wind_bearing(h.get("wind_dir")),
-                        condition=map_condition(
-                            h.get("condition_text"), h.get("condition_code")
-                        ),
+                        condition=_apply_night(raw, is_night),
                     )
                 )
         return forecasts or None
@@ -213,3 +237,15 @@ def _parse_slot_time(
         return dt.replace(tzinfo=dt_util.DEFAULT_TIME_ZONE)
     except (ValueError, IndexError):
         return None
+
+
+def _is_night_at(dt: datetime) -> bool:
+    """Return True if the given local datetime falls between 21:00 and 06:00.
+
+    A simple time-of-day heuristic — avoids a dependency on ephem or
+    real-time astral calculations for forecast slots that may be days away.
+    The exact sunrise/sunset varies by season and location but this range
+    safely covers astronomical darkness year-round in Italy.
+    """
+    hour = dt.hour
+    return hour >= 21 or hour < 6

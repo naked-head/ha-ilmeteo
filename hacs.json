@@ -3,5 +3,7 @@
   "content_in_root": false,
   "render_readme": true,
   "homeassistant": "2026.5.0",
+  "zip_release": true,
+  "filename": "ilmeteo.zip",
   "country": ["IT"]
 }

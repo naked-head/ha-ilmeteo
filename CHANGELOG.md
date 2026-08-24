@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-08-24
+
+### Changed
+- HACS now installs from the release ZIP asset (`zip_release`), so download counts are tracked correctly.
+
 ## [1.1.4] - 2026-08-09
 ### Fixed
 - Weather entity showed `sunny` instead of `clear-night` at night with clear skies (closes #7). Root cause: iLMeteo's `real1` box never uses night condition codes (≥100), unlike `tri1`. Fixed by applying night correction in `weather.py` independently of the condition code: current conditions use `homeassistant.helpers.sun.is_up()`, hourly forecast slots use a time-of-day heuristic (21:00–06:00). Daily forecasts are unaffected.
@@ -181,7 +186,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 - Initial draft based on the official iLMeteo REST API (later abandoned, enterprise-only).
 
-[Unreleased]: https://github.com/naked-head/ha-ilmeteo/compare/v1.1.4...HEAD
+[Unreleased]: https://github.com/naked-head/ha-ilmeteo/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/naked-head/ha-ilmeteo/compare/v1.1.4...v1.2.0
 [1.1.4]: https://github.com/naked-head/ha-ilmeteo/compare/v1.1.3...v1.1.4
 [1.1.3]: https://github.com/naked-head/ha-ilmeteo/compare/v1.1.2...v1.1.3
 [1.1.2]: https://github.com/naked-head/ha-ilmeteo/compare/v1.1.1...v1.1.2

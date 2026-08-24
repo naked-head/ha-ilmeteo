@@ -37,7 +37,12 @@ jobs:
           cat release_notes.md
       - name: Create release zip
         run: |
-          zip -r ilmeteo.zip custom_components/
+          cd custom_components/ilmeteo
+          zip -r "${GITHUB_WORKSPACE}/ilmeteo.zip" . -x '*.pyc' -x '__pycache__/*'
+      - name: Verify zip layout
+        run: |
+          unzip -l ilmeteo.zip | grep -q " manifest.json$" \
+            || { echo "manifest.json non è nella root dello zip"; exit 1; }
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:

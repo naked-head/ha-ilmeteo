@@ -1,8 +1,13 @@
 name: Release
+
 on:
   push:
     tags:
       - "v*.*.*"
+  # Manual fallback: pick the tag under "Use workflow from" to (re)create its
+  # release, e.g. after a GitHub Actions outage swallowed the tag push event.
+  workflow_dispatch:
+
 jobs:
   release:
     name: Create GitHub Release
@@ -14,35 +19,84 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Get version from tag
+
+      - name: Resolve version from tag
         id: version
         run: |
-          echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
-          BASE="${GITHUB_REF_NAME#v}"; BASE="${BASE%%-*}"
-          echo "BASE_VERSION=${BASE}" >> $GITHUB_OUTPUT
+          if [ "${{ github.ref_type }}" != "tag" ]; then
+            echo "::error::This workflow must run on a tag ref, got '${{ github.ref_name }}'."
+            exit 1
+          fi
+
+          # v1.3.0-beta.1 -> VERSION=1.3.0-beta.1, BASE_VERSION=1.3.0
+          # Pre-release notes live under the final version's CHANGELOG
+          # section, so lookups always use BASE_VERSION.
+          VERSION="${GITHUB_REF_NAME#v}"
+          BASE_VERSION="${VERSION%%-*}"
+
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "base_version=$BASE_VERSION" >> "$GITHUB_OUTPUT"
+          echo "Tag $GITHUB_REF_NAME -> version=$VERSION, base=$BASE_VERSION"
+
       - name: Update manifest version
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
-          sed -i 's/"version": ".*"/"version": "${{ steps.version.outputs.BASE_VERSION }}"/' \
+          # Full tag version, suffix included: an installed pre-release has to
+          # identify itself as one in Home Assistant's integration panel.
+          # This patches the CI checkout only — the committed manifest.json
+          # keeps whatever version it had.
+          sed -i "s/\"version\": \".*\"/\"version\": \"${VERSION}\"/" \
             custom_components/ilmeteo/manifest.json
+          grep '"version"' custom_components/ilmeteo/manifest.json
+
       - name: Extract changelog section
-        id: changelog
         run: |
-          awk -v ver="${{ steps.version.outputs.BASE_VERSION }}" '
+          awk -v ver="${{ steps.version.outputs.base_version }}" '
             $0 ~ "^## \\[" ver "\\]" { found=1; next }
-            found && /^## \[/ { exit }
-            found && /^\[.*\]: http/ { exit }
+            found && /^## \[/      { exit }
+            found && /^\[[^]]+\]:/ { exit }
             found { print }
           ' CHANGELOG.md > release_notes.md
+
+          # A pre-release tagged before the CHANGELOG section is renamed still
+          # has its content under [Unreleased]: fall back to it rather than
+          # publishing empty release notes.
+          if [ ! -s release_notes.md ]; then
+            awk '
+              /^## \[Unreleased\]/   { found=1; next }
+              found && /^## \[/      { exit }
+              found && /^\[[^]]+\]:/ { exit }
+              found { print }
+            ' CHANGELOG.md > release_notes.md
+          fi
+
           echo "Extracted notes:"
           cat release_notes.md
+
       - name: Create release zip
         run: |
           cd custom_components/ilmeteo
           zip -r "${GITHUB_WORKSPACE}/ilmeteo.zip" . -x '*.pyc' -x '__pycache__/*'
+
       - name: Verify zip layout
         run: |
-          unzip -l ilmeteo.zip | grep -q " manifest.json$" \
-            || { echo "manifest.json non è nella root dello zip"; exit 1; }
+          # HACS unpacks the zip straight into config/custom_components/ilmeteo,
+          # so manifest.json has to sit at the root of the archive. A zip that
+          # kept the custom_components/ prefix installs one level too deep and
+          # the integration silently never loads.
+          if ! unzip -l ilmeteo.zip | grep -qE " manifest\.json$"; then
+            echo "::error::manifest.json is not at the root of the zip."
+            unzip -l ilmeteo.zip
+            exit 1
+          fi
+          if unzip -l ilmeteo.zip | grep -q "custom_components/"; then
+            echo "::error::the zip must not contain the custom_components/ prefix."
+            unzip -l ilmeteo.zip
+            exit 1
+          fi
+          echo "Zip layout OK"
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -50,5 +104,8 @@ jobs:
           name: "ha-ilmeteo ${{ github.ref_name }}"
           body_path: release_notes.md
           draft: false
+          # Tags carrying a pre-release suffix (v1.3.0-beta.1) are published as
+          # pre-releases, so HACS only offers them to users who enabled
+          # "Show beta versions".
           prerelease: ${{ contains(github.ref_name, '-') }}
           files: ilmeteo.zip

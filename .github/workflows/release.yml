@@ -29,8 +29,6 @@ jobs:
           fi
 
           # v1.3.0-beta.1 -> VERSION=1.3.0-beta.1, BASE_VERSION=1.3.0
-          # Pre-release notes live under the final version's CHANGELOG
-          # section, so lookups always use BASE_VERSION.
           VERSION="${GITHUB_REF_NAME#v}"
           BASE_VERSION="${VERSION%%-*}"
 
@@ -38,21 +36,42 @@ jobs:
           echo "base_version=$BASE_VERSION" >> "$GITHUB_OUTPUT"
           echo "Tag $GITHUB_REF_NAME -> version=$VERSION, base=$BASE_VERSION"
 
-      - name: Update manifest version
+      # The committed manifest.json has to carry the base version already.
+      # Patching it here without committing back would leave the repository
+      # claiming an older version to anyone installing from source or reading
+      # the file on main — which is exactly what used to happen.
+      - name: Verify manifest.json matches the tag
+        env:
+          BASE_VERSION: ${{ steps.version.outputs.base_version }}
+        run: |
+          MANIFEST="custom_components/ilmeteo/manifest.json"
+          MANIFEST_VERSION="$(python3 -c "import json;print(json.load(open('$MANIFEST'))['version'])")"
+          if [ "$MANIFEST_VERSION" != "$BASE_VERSION" ]; then
+            echo "::error::$MANIFEST says $MANIFEST_VERSION but the tag says $BASE_VERSION. Bump the manifest, commit, and re-tag."
+            exit 1
+          fi
+          echo "manifest.json version $MANIFEST_VERSION matches tag."
+
+      # Pre-release tags only: stamp the suffix into the CI checkout so an
+      # installed beta identifies itself as one in Home Assistant's
+      # integration panel. Never committed — the repository keeps the base
+      # version, which is what the check above enforces.
+      - name: Stamp the pre-release suffix into manifest.json
+        if: steps.version.outputs.version != steps.version.outputs.base_version
         env:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
-          # Full tag version, suffix included: an installed pre-release has to
-          # identify itself as one in Home Assistant's integration panel.
-          # This patches the CI checkout only — the committed manifest.json
-          # keeps whatever version it had.
           sed -i "s/\"version\": \".*\"/\"version\": \"${VERSION}\"/" \
             custom_components/ilmeteo/manifest.json
           grep '"version"' custom_components/ilmeteo/manifest.json
 
-      - name: Extract changelog section
+      - name: Extract release notes from CHANGELOG.md
+        env:
+          BASE_VERSION: ${{ steps.version.outputs.base_version }}
         run: |
-          awk -v ver="${{ steps.version.outputs.base_version }}" '
+          # Everything between "## [BASE_VERSION]" and the next "## [" heading
+          # or the block of link definitions at the end of the file.
+          awk -v ver="$BASE_VERSION" '
             $0 ~ "^## \\[" ver "\\]" { found=1; next }
             found && /^## \[/      { exit }
             found && /^\[[^]]+\]:/ { exit }
@@ -71,7 +90,48 @@ jobs:
             ' CHANGELOG.md > release_notes.md
           fi
 
-          echo "Extracted notes:"
+          # Trim trailing whitespace, then leading/trailing blank lines.
+          sed -i -e 's/[[:space:]]*$//' -e '/./,$!d' release_notes.md
+
+          # Unwrap hard-wrapped paragraphs. CHANGELOG.md is wrapped at ~80
+          # columns, which reads well in the repo because GitHub joins single
+          # newlines when rendering a .md file. Release bodies are rendered
+          # with hard line breaks instead, where every newline becomes a <br>,
+          # so the wrapping would show up as ragged mid-sentence breaks.
+          # Fold each block onto one line and let the browser wrap it.
+          awk '
+            function flush() { if (buf != "") { print buf; buf = "" } }
+            BEGIN { buf = ""; fence = 0 }
+            {
+              line = $0
+
+              # Fenced code blocks pass through untouched.
+              if (line ~ /^[[:space:]]*(```|~~~)/) { flush(); print line; fence = !fence; next }
+              if (fence)                          { flush(); print line; next }
+
+              # Blank line ends the current block.
+              if (line ~ /^[[:space:]]*$/) { flush(); print ""; next }
+
+              # Indented code at the start of a block passes through.
+              if (buf == "" && line ~ /^    [^[:space:]]/) { print line; next }
+
+              # A continuation line: indented, not a new list item, and with
+              # something to attach to. Fold it in with a single space.
+              if (buf != "" && line ~ /^[[:space:]]+[^[:space:]]/ &&
+                  line !~ /^[[:space:]]*([-*+]|[0-9]+\.)[[:space:]]/) {
+                sub(/^[[:space:]]+/, "", line)
+                buf = buf " " line
+                next
+              }
+
+              # Anything else starts a new block.
+              flush()
+              buf = line
+            }
+            END { flush() }
+          ' release_notes.md > release_notes.unwrapped && mv release_notes.unwrapped release_notes.md
+
+          echo "Release notes:"
           cat release_notes.md
 
       - name: Create release zip

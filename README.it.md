@@ -6,7 +6,7 @@
 
 # iLMeteo.it — Integrazione personalizzata per Home Assistant
 
-[![hacs_badge](https://img.shields.io/badge/HACS-Default-blue.svg)](https://github.com/hacs/default)
+[![hacs_badge](https://img.shields.io/badge/HACS-Default-orange.svg)](https://github.com/hacs/default)
 [![GitHub Release](https://img.shields.io/github/release/naked-head/ha-ilmeteo.svg)](https://github.com/naked-head/ha-ilmeteo/releases)
 [![Validate](https://github.com/naked-head/ha-ilmeteo/actions/workflows/validate.yml/badge.svg)](https://github.com/naked-head/ha-ilmeteo/actions/workflows/validate.yml)
 [![License](https://img.shields.io/github/license/naked-head/ha-ilmeteo.svg)](https://github.com/naked-head/ha-ilmeteo/blob/main/LICENSE)

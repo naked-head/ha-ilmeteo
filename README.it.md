@@ -6,7 +6,7 @@
 
 # iLMeteo.it — Integrazione personalizzata per Home Assistant
 
-[![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/integration)
+[![hacs_badge](https://img.shields.io/badge/HACS-Default-blue.svg)](https://github.com/hacs/default)
 [![GitHub Release](https://img.shields.io/github/release/naked-head/ha-ilmeteo.svg)](https://github.com/naked-head/ha-ilmeteo/releases)
 [![Validate](https://github.com/naked-head/ha-ilmeteo/actions/workflows/validate.yml/badge.svg)](https://github.com/naked-head/ha-ilmeteo/actions/workflows/validate.yml)
 [![License](https://img.shields.io/github/license/naked-head/ha-ilmeteo.svg)](https://github.com/naked-head/ha-ilmeteo/blob/main/LICENSE)
@@ -49,10 +49,10 @@ Un'integrazione per [Home Assistant](https://www.home-assistant.io/) che espone 
 
 ### Tramite HACS (consigliato)
 
-1. HACS → Integrazioni → menu ⋮ → **Repository personalizzati**
-2. Aggiungi `https://github.com/naked-head/ha-ilmeteo`, categoria **Integrazione**
-3. Cerca "iLMeteo" e installa
-4. Riavvia Home Assistant
+1. Apri HACS e cerca **iLMeteo.it**
+2. Installa, poi riavvia Home Assistant
+
+L'integrazione è nel catalogo predefinito di HACS: non serve aggiungere un repository personalizzato.
 
 ### Manuale
 

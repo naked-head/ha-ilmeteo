@@ -6,7 +6,7 @@
 
 # iLMeteo.it — Home Assistant Custom Integration
 
-[![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/integration)
+[![hacs_badge](https://img.shields.io/badge/HACS-Default-blue.svg)](https://github.com/hacs/default)
 [![GitHub Release](https://img.shields.io/github/release/naked-head/ha-ilmeteo.svg)](https://github.com/naked-head/ha-ilmeteo/releases)
 [![Validate](https://github.com/naked-head/ha-ilmeteo/actions/workflows/validate.yml/badge.svg)](https://github.com/naked-head/ha-ilmeteo/actions/workflows/validate.yml)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
@@ -49,10 +49,10 @@ A [Home Assistant](https://www.home-assistant.io/) integration that exposes weat
 
 ### Via HACS (recommended)
 
-1. HACS → Integrations → ⋮ menu → **Custom repositories**
-2. Add `https://github.com/naked-head/ha-ilmeteo`, category **Integration**
-3. Search for "iLMeteo" and install
-4. Restart Home Assistant
+1. Open HACS and search for **iLMeteo.it**
+2. Install, then restart Home Assistant
+
+The integration is in the HACS default catalogue: no custom repository needed.
 
 ### Manual
 

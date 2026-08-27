@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+- Relicensed from GPL-3.0-or-later to Apache-2.0.
+
 ## [1.2.0] - 2026-08-24
 
 ### Changed

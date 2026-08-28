@@ -2,10 +2,11 @@
 
 All notable changes to this project are documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/).
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
+
+## [1.2.1] - 2026-08-28
 
 ### Changed
 - Relicensed from GPL-3.0-or-later to Apache-2.0.
@@ -189,7 +190,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Added
 - Initial draft based on the official iLMeteo REST API (later abandoned, enterprise-only).
 
-[Unreleased]: https://github.com/naked-head/ha-ilmeteo/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/naked-head/ha-ilmeteo/compare/v1.2.1...HEAD
+[1.2.1]: https://github.com/naked-head/ha-ilmeteo/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/naked-head/ha-ilmeteo/compare/v1.1.4...v1.2.0
 [1.1.4]: https://github.com/naked-head/ha-ilmeteo/compare/v1.1.3...v1.1.4
 [1.1.3]: https://github.com/naked-head/ha-ilmeteo/compare/v1.1.2...v1.1.3

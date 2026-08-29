@@ -75,7 +75,7 @@ jobs:
           done < <(grep -ohE 'raw\.githubusercontent\.com/naked-head/ha-ilmeteo/[^"]+\.png' README.md README.it.md | sort -u)
           [ "$bad" -eq 0 ] || exit 1
           echo "README image refs OK."
-      - name: Verify README links are absolute
+            - name: Verify README links are absolute
         run: |
           # HACS renders the README through Home Assistant's markdown
           # sanitiser: relative link targets are blanked (href="") and
@@ -85,11 +85,16 @@ jobs:
           for f in README.md README.it.md; do
             [ -f "$f" ] || continue
             while read -r target; do
+              [ -n "$target" ] || continue
               case "$target" in
                 http://*|https://*|\#*|mailto:*) ;;
-                *) echo "::error::$f: relative link target '$target' will be blanked in HACS."; bad=1 ;;
+                *) echo "::error::$f: relative target '$target' will be blanked in HACS."; bad=1 ;;
               esac
-            done < <(grep -oE '\]\([^)]+\)' "$f" | sed -e 's/^](//' -e 's/)$//')
+            done < <(
+              { grep -oE '\]\([^)]+\)' "$f" | sed -e 's/^](//' -e 's/)$//'
+                grep -oE '(href|src)="[^"]*"' "$f" | sed -e 's/^[a-z]*="//' -e 's/"$//'
+              } | sort -u
+            )
           done
           [ "$bad" -eq 0 ] || exit 1
           echo "README link targets OK."

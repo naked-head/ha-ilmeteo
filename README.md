@@ -151,7 +151,7 @@ python scripts/build_locations.py codici_comuni.csv codici_province.csv \
 
 ## Changelog
 
-See [CHANGELOG.md](CHANGELOG.md) for the full version history.
+See [CHANGELOG.md](https://github.com/naked-head/ha-ilmeteo/blob/HEAD/CHANGELOG.md) for the full version history.
 
 ---
 

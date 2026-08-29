@@ -10,6 +10,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - The header logo is referenced at `HEAD` instead of `main`, so it keeps resolving if the default branch is ever renamed.
 - The release workflow now checks that the card screenshot is pinned to the tag being released, so the README shown in HACS matches the installed version.
 
+### Fixed
+- Links to other files in the repository are absolute, so they work in the README rendered by HACS. Relative targets are blanked by Home Assistant's markdown sanitiser, which left the links dead exactly where users read the page.
+
 ## [1.2.1] - 2026-08-28
 
 ### Changed

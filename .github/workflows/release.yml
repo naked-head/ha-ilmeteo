@@ -75,7 +75,7 @@ jobs:
           done < <(grep -ohE 'raw\.githubusercontent\.com/naked-head/ha-ilmeteo/[^"]+\.png' README.md README.it.md | sort -u)
           [ "$bad" -eq 0 ] || exit 1
           echo "README image refs OK."
-            - name: Verify README links are absolute
+      - name: Verify README links are absolute
         run: |
           # HACS renders the README through Home Assistant's markdown
           # sanitiser: relative link targets are blanked (href="") and

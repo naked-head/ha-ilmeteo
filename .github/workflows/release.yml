@@ -51,6 +51,48 @@ jobs:
             exit 1
           fi
           echo "manifest.json version $MANIFEST_VERSION matches tag."
+      - name: Verify README image refs
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          # Screenshots show the integration's own output, so they must match
+          # the release: HACS fetches the README at the installed tag. The
+          # logo does not change between versions and stays on HEAD. Relative
+          # paths are not an option — Home Assistant's markdown sanitiser
+          # blanks any image source that is not an absolute URL.
+          bad=0
+          while read -r url; do
+            ref="$(echo "$url" | cut -d/ -f4)"
+            file="${url##*/}"
+            case "$file" in
+              logo.png)
+                [ "$ref" = "HEAD" ] || { echo "::error::$file should be at HEAD, found '$ref'."; bad=1; }
+                ;;
+              *)
+                [ "$ref" = "$TAG" ] || { echo "::error::$file must be pinned to $TAG, found '$ref'. Update the README, commit, and re-tag."; bad=1; }
+                ;;
+            esac
+          done < <(grep -ohE 'raw\.githubusercontent\.com/naked-head/ha-ilmeteo/[^"]+\.png' README.md README.it.md | sort -u)
+          [ "$bad" -eq 0 ] || exit 1
+          echo "README image refs OK."
+      - name: Verify README links are absolute
+        run: |
+          # HACS renders the README through Home Assistant's markdown
+          # sanitiser: relative link targets are blanked (href="") and
+          # relative image sources come out as src="". Anchors (#section) are
+          # fine — they resolve within the rendered document.
+          bad=0
+          for f in README.md README.it.md; do
+            [ -f "$f" ] || continue
+            while read -r target; do
+              case "$target" in
+                http://*|https://*|\#*|mailto:*) ;;
+                *) echo "::error::$f: relative link target '$target' will be blanked in HACS."; bad=1 ;;
+              esac
+            done < <(grep -oE '\]\([^)]+\)' "$f" | sed -e 's/^](//' -e 's/)$//')
+          done
+          [ "$bad" -eq 0 ] || exit 1
+          echo "README link targets OK."
 
       # Pre-release tags only: stamp the suffix into the CI checkout so an
       # installed beta identifies itself as one in Home Assistant's

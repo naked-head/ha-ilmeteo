@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Changed
+- The header logo is referenced at `HEAD` instead of `main`, so it keeps resolving if the default branch is ever renamed.
+- The release workflow now checks that the card screenshot is pinned to the tag being released, so the README shown in HACS matches the installed version.
+
 ## [1.2.1] - 2026-08-28
 
 ### Changed

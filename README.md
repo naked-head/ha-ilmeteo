@@ -1,15 +1,15 @@
 <p align="center">
-  <a href="https://www.ilmeteo.it/" target="_blank"><img src="https://raw.githubusercontent.com/naked-head/ha-ilmeteo/main/images/logo.png" alt="iLMeteo.it" width="120"></a>
+  <a href="https://www.ilmeteo.it/" target="_blank"><img src="https://raw.githubusercontent.com/naked-head/ha-ilmeteo/HEAD/images/logo.png" alt="iLMeteo.it" width="120"></a>
 </p>
 
-<p align="right"><a href="README.it.md">🇮🇹 Leggi in italiano</a></p>
+<p align="right"><a href="https://github.com/naked-head/ha-ilmeteo/blob/HEAD/README.it.md">🇮🇹 Leggi in italiano</a></p>
 
 # iLMeteo.it — Home Assistant Custom Integration
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Default-orange.svg)](https://github.com/hacs/default)
 [![GitHub Release](https://img.shields.io/github/release/naked-head/ha-ilmeteo.svg)](https://github.com/naked-head/ha-ilmeteo/releases)
 [![Validate](https://github.com/naked-head/ha-ilmeteo/actions/workflows/validate.yml/badge.svg)](https://github.com/naked-head/ha-ilmeteo/actions/workflows/validate.yml)
-[![License](https://img.shields.io/github/license/naked-head/ha-ilmeteo)](LICENSE)
+[![License](https://img.shields.io/github/license/naked-head/ha-ilmeteo)](https://github.com/naked-head/ha-ilmeteo/blob/HEAD/LICENSE)
 
 [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=naked-head&repository=ha-ilmeteo&category=integration)
 
@@ -157,7 +157,7 @@ See [CHANGELOG.md](CHANGELOG.md) for the full version history.
 
 ## License
 
-Apache-2.0 — see [LICENSE](https://github.com/naked-head/ha-ilmeteo/blob/main/LICENSE)
+Apache-2.0 — see [LICENSE](https://github.com/naked-head/ha-ilmeteo/blob/HEAD/LICENSE)
 
 ## Disclaimer
 
